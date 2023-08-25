@@ -5,10 +5,10 @@ import torch
 from torch.utils.data import Dataset
 
 
-RGB_SPECTRAL_STENCIL = np.array([480, 525, 650])
+RGB_SPECTRAL_STENCIL = np.array([650, 525, 480])
 
 
-def data_loader_rgb(input_dir: str):
+def data_loader_rgb(input_dir: str, scale: int):
     """load rgb dataset from the input directory.
 
     Args:
@@ -21,17 +21,17 @@ def data_loader_rgb(input_dir: str):
     images = glob.glob(os.path.join(input_dir, "*.jpg"))
     for image_path in images:
         image = Image.open(image_path)
+        image = image.resize((image.size[0] // scale, image.size[1] // scale))
         res.append(np.array(image) / 255)
 
     return res
 
 
 class RGBDataset(Dataset):
-    def __init__(self, images_dir, device, transform=None):
+    def __init__(self, images_dir, transform=None):
         self.images_dir = images_dir
-        self.device = device
         self.transform = transform
-        self.data = data_loader_rgb(images_dir)
+        self.data = data_loader_rgb(images_dir, 12)
 
 
     def __len__(self):
@@ -39,10 +39,10 @@ class RGBDataset(Dataset):
     
     def __getitem__(self, index):
         gt = self.data[index]
-        if gt.shape == (321, 481, 3):
+        if gt.shape[0] > gt.shape[1]:
             gt = gt.transpose((1, 0, 2))
 
         if self.transform is not None:
             x = self.transform(gt)
 
-        return torch.tensor(x, dtype=torch.float, device=self.device), torch.tensor(gt, dtype=torch.float, device=self.device)
+        return torch.tensor(x, dtype=torch.float), torch.tensor(gt, dtype=torch.float)
