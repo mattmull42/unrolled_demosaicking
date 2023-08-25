@@ -5,8 +5,6 @@ import numpy as np
 from src.forward_operator.operators import *
 from src.forward_operator.forward_operator import forward_operator
 
-from time import perf_counter
-
 
 class U_PDGH(nn.Module):
     def __init__(self, N, cfa, spectral_stencil, kernel_size) -> None:
@@ -33,11 +31,11 @@ class U_PDGH(nn.Module):
         op = cfa_operator(self.cfa, self.data['shape'][1:], self.spectral_stencil, 'dirac')
         forward_op = forward_operator([op])
         A_scipy = forward_op.matrix.tocoo()
-        A = torch.sparse_coo_tensor(np.vstack((A_scipy.row, A_scipy.col)), A_scipy.data, A_scipy.shape, dtype=torch.float, device=self.device).coalesce()
+        A = torch.sparse_coo_tensor(np.vstack((A_scipy.row, A_scipy.col)), A_scipy.data, A_scipy.shape, dtype=x.dtype, device=self.device).coalesce()
 
         self.data['A'] = A
         self.data['AT'] = self.data['A'].T
-        self.data['AAT'] = torch.tensor((A_scipy @ A_scipy.T).todia().data, device=self.device).squeeze()
+        self.data['AAT'] = torch.tensor((A_scipy @ A_scipy.T).todia().data, dtype=x.dtype, device=self.device).squeeze()
 
         self.data['ATy'] = (self.data['AT'] @ x.view(x.shape[0], -1).T).T
         self.data['x'] = self.data['ATy'].clone()

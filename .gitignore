@@ -1,5 +1,7 @@
 output/*
 !output/.gitkeep
+lightning_logs
+src/images
 
 
 # Byte-compiled / optimized / DLL files
