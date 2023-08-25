@@ -31,8 +31,7 @@ class RGBDataset(Dataset):
     def __init__(self, images_dir, transform=None):
         self.images_dir = images_dir
         self.transform = transform
-        self.data = data_loader_rgb(images_dir, 12)
-
+        self.data = data_loader_rgb(images_dir, 10)
 
     def __len__(self):
         return len(self.data)
