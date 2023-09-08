@@ -3,7 +3,25 @@ import torch.nn as nn
 import numpy as np
 
 from src.forward_operator.operators import *
-from src.forward_operator.forward_operator import forward_operator
+
+
+class U_PDGH_(nn.Module):
+    def __init__(self, N, cfa, spectral_stencil, kernel_size) -> None:
+        super().__init__()
+
+        conv_1 = nn.Conv2d(3, 32, kernel_size, padding=1)
+        relu_1 = nn.ReLU()
+        conv_2 = nn.Conv2d(32, 3, kernel_size, padding=1)
+        relu_2 = nn.ReLU()
+        layers = [conv_1, relu_1, conv_2, relu_2]
+
+        self.layers = nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = x[:, :, :, 1:].squeeze(axis=-1)
+        s = x.shape
+        
+        return self.layers(x.reshape(s[0], s[3], s[1], s[2])).view(s)
 
 
 class U_PDGH(nn.Module):
@@ -16,7 +34,8 @@ class U_PDGH(nn.Module):
         self.data = dict()
 
         layers = []
-        second_layer = dual_layer(len(spectral_stencil), kernel_size)
+        # second_layer = dual_layer(len(spectral_stencil), kernel_size)
+        second_layer = dual_layer(len(spectral_stencil), 32, kernel_size)
 
         for _ in range(N):
             layers.append(primal_layer())
@@ -24,13 +43,14 @@ class U_PDGH(nn.Module):
 
         self.layers = nn.Sequential(*layers)
 
-
     def setup_operator(self, x):
+        x_0 = x[:, :, :, 1:]
+        x = x[:, :, :, :1].squeeze(axis=-1)
+
         self.data['shape'] = (x.shape[0], x.shape[1], x.shape[2], len(self.spectral_stencil))
 
         op = cfa_operator(self.cfa, self.data['shape'][1:], self.spectral_stencil, 'dirac')
-        forward_op = forward_operator([op])
-        A_scipy = forward_op.matrix.tocoo()
+        A_scipy = op.matrix.tocoo()
         A = torch.sparse_coo_tensor(np.vstack((A_scipy.row, A_scipy.col)), A_scipy.data, A_scipy.shape, dtype=x.dtype, device=self.device).coalesce()
 
         self.data['A'] = A
@@ -38,9 +58,8 @@ class U_PDGH(nn.Module):
         self.data['AAT'] = torch.tensor((A_scipy @ A_scipy.T).todia().data, dtype=x.dtype, device=self.device).squeeze()
 
         self.data['ATy'] = (self.data['AT'] @ x.view(x.shape[0], -1).T).T
-        self.data['x'] = self.data['ATy'].clone()
+        self.data['x'] = x_0.reshape(x.shape[0], -1)
         self.data['z'] = torch.zeros_like(self.data['x'])
-
 
     def forward(self, x):
         self.setup_operator(x)
@@ -56,7 +75,6 @@ class primal_layer(nn.Module):
 
         self.tau = nn.Parameter(torch.tensor(0.1))
 
-
     def forward(self, data):
         data['x_prev'] = data['x'].clone()
         data['x'] = data['x'] + self.tau * (data['ATy'] - data['z'])
@@ -70,32 +88,28 @@ class primal_layer(nn.Module):
         return data
 
 
-class dual_layer_(nn.Module):
-    def __init__(self, C, kernel_size) -> None:
+class dual_layer(nn.Module):
+    def __init__(self, C, mid_channel_nb, kernel_size) -> None:
         super().__init__()
 
-        self.in_channel_nb = C
-        self.mid_channel_nb = 24
-        self.kernel_size = kernel_size
-        self.sigma = nn.Parameter(torch.tensor(0.1))
-        self.conv_1 = nn.Conv2d(C, self.mid_channel_nb, self.kernel_size, padding=1)
+        # self.sigma = nn.Parameter(torch.tensor(0.1))
+        self.conv_1 = nn.Conv2d(C, mid_channel_nb, kernel_size, padding=1)
         self.relu_1 = nn.ReLU()
-        self.conv_2 = nn.Conv2d(self.mid_channel_nb, C, self.kernel_size, padding=1)
+        self.conv_2 = nn.Conv2d(mid_channel_nb, C, kernel_size, padding=1)
         self.relu_2 = nn.ReLU()
-    
 
     def forward(self, data):
         input_shape = (data['shape'][0], data['shape'][3], data['shape'][1], data['shape'][2])
         output_shape = (data['shape'][0], -1)
 
-        data['z'] = data['z'] + self.sigma * (2 * data['x'] - data['x_prev'])
+        # data['z'] = data['z'] + self.sigma * (2 * data['x'] - data['x_prev'])
         data['z'] = self.relu_1(self.conv_1(data['z'].view(input_shape)))
         data['z'] = self.relu_2(self.conv_2(data['z'])).view(output_shape)
 
         return data
 
 
-class dual_layer(nn.Module):
+class dual_layer_(nn.Module):
     def __init__(self, in_channels, kernel_size) -> None:
         super().__init__()
 
@@ -119,7 +133,6 @@ class dual_layer(nn.Module):
         self.tconv_3 = conv_block(16, kernel_size)
 
         self.conv_5 = nn.Conv2d(16, 3, kernel_size, padding=1)
-    
 
     def forward(self, data):
         input_shape = (data['shape'][0], data['shape'][3], data['shape'][1], data['shape'][2])
@@ -167,7 +180,7 @@ class down_block(nn.Module):
 
     def forward(self, x):
         return self.res(x)
-    
+
 
 class up_block(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size) -> None:

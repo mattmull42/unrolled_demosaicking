@@ -28,10 +28,11 @@ def data_loader_rgb(input_dir: str, scale: int):
 
 
 class RGBDataset(Dataset):
-    def __init__(self, images_dir, transform=None):
+    def __init__(self, images_dir, transform, baseline_inversion):
         self.images_dir = images_dir
         self.transform = transform
-        self.data = data_loader_rgb(images_dir, 10)
+        self.baseline_inversion = baseline_inversion
+        self.data = data_loader_rgb(images_dir, 4)
 
     def __len__(self):
         return len(self.data)
@@ -41,7 +42,7 @@ class RGBDataset(Dataset):
         if gt.shape[0] > gt.shape[1]:
             gt = gt.transpose((1, 0, 2))
 
-        if self.transform is not None:
-            x = self.transform(gt)
+        x = self.transform(gt)
+        x_0 = self.baseline_inversion(x)
 
-        return torch.tensor(x, dtype=torch.float), torch.tensor(gt, dtype=torch.float)
+        return torch.tensor(np.concatenate((x[:, :, None], x_0), axis=2), dtype=torch.float), torch.tensor(gt, dtype=torch.float)

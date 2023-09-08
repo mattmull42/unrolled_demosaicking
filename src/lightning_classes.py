@@ -21,16 +21,27 @@ class U_PDHG_system(LightningModule):
     def training_step(self, batch, batch_idx):
         x, gt = batch
         res = self.model(x)
+        loss = nn.functional.mse_loss(gt, res)
 
-        self.log('train_loss', nn.functional.mse_loss(gt, res), prog_bar=True)
+        self.log('train_loss', loss, prog_bar=True)
+        self.logger.experiment.add_scalar('Loss/Train', loss, self.current_epoch)
 
-        return nn.functional.mse_loss(gt, res)
+        for name, params in self.named_parameters():
+            if name.endswith('tau'):
+                self.logger.experiment.add_scalar(f'Tau/{name.split(".")[2]}', params, self.current_epoch)
+
+            else:
+                self.logger.experiment.add_histogram(name, params, self.current_epoch)
+
+        return loss
     
     def validation_step(self, batch, batch_idx):
         x, gt = batch
         res = self.model(x)
+        loss = nn.functional.mse_loss(gt, res)
 
-        self.log('val_loss', nn.functional.mse_loss(gt, res), prog_bar=True)
+        self.log('val_loss', loss, prog_bar=True)
+        self.logger.experiment.add_scalar('Loss/Val', loss, self.current_epoch)
     
     def test_step(self, batch, batch_idx):
         x, gt = batch
