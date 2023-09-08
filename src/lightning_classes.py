@@ -23,7 +23,6 @@ class U_PDHG_system(LightningModule):
         res = self.model(x)
         loss = nn.functional.mse_loss(gt, res)
 
-        self.log('train_loss', loss, prog_bar=True)
         self.logger.experiment.add_scalar('Loss/Train', loss, self.current_epoch)
 
         for name, params in self.named_parameters():
@@ -31,7 +30,7 @@ class U_PDHG_system(LightningModule):
                 self.logger.experiment.add_scalar(f'Tau/{name.split(".")[2]}', params, self.current_epoch)
 
             else:
-                self.logger.experiment.add_histogram(name, params, self.current_epoch)
+                self.logger.experiment.add_histogram(f'{".".join(name.split(".")[:-1])}/{name.split(".")[-1]}', params, self.current_epoch)
 
         return loss
     
@@ -53,7 +52,10 @@ class U_PDHG_system(LightningModule):
         return super().train_dataloader()
     
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = optim.Adam(self.parameters(), lr=self.lr)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, threshold=1e-6)
+
+        return [optimizer], [{'scheduler': scheduler, 'monitor': 'val_loss'}]
     
 
 class DataModule(LightningDataModule):
