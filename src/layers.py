@@ -5,27 +5,8 @@ import numpy as np
 from src.forward_operator.operators import *
 
 
-class U_PDGH_(nn.Module):
-    def __init__(self, N, cfa, spectral_stencil, kernel_size) -> None:
-        super().__init__()
-
-        conv_1 = nn.Conv2d(3, 32, kernel_size, padding=1)
-        relu_1 = nn.ReLU()
-        conv_2 = nn.Conv2d(32, 3, kernel_size, padding=1)
-        relu_2 = nn.ReLU()
-        layers = [conv_1, relu_1, conv_2, relu_2]
-
-        self.layers = nn.Sequential(*layers)
-
-    def forward(self, x):
-        x = x[:, :, :, 1:].squeeze(axis=-1)
-        s = x.shape
-        
-        return self.layers(x.reshape(s[0], s[3], s[1], s[2])).view(s)
-
-
 class U_PDGH(nn.Module):
-    def __init__(self, N, cfa, spectral_stencil, kernel_size) -> None:
+    def __init__(self, N, cfa, spectral_stencil, nb_channels, kernel_size) -> None:
         super().__init__()
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -34,8 +15,7 @@ class U_PDGH(nn.Module):
         self.data = dict()
 
         layers = []
-        # second_layer = dual_layer(len(spectral_stencil), kernel_size)
-        second_layer = dual_layer(len(spectral_stencil), 32, kernel_size)
+        second_layer = dual_layer(len(spectral_stencil), nb_channels, kernel_size)
 
         for _ in range(N):
             layers.append(primal_layer())
@@ -92,17 +72,17 @@ class dual_layer(nn.Module):
     def __init__(self, C, mid_channel_nb, kernel_size) -> None:
         super().__init__()
 
-        # self.sigma = nn.Parameter(torch.tensor(0.1))
+        self.sigma = nn.Parameter(torch.tensor(0.1))
         self.conv_1 = nn.Conv2d(C, mid_channel_nb, kernel_size, padding=1)
-        self.relu_1 = nn.ReLU()
+        self.relu_1 = nn.LeakyReLU(inplace=True)
         self.conv_2 = nn.Conv2d(mid_channel_nb, C, kernel_size, padding=1)
-        self.relu_2 = nn.ReLU()
+        self.relu_2 = nn.LeakyReLU(inplace=True)
 
     def forward(self, data):
         input_shape = (data['shape'][0], data['shape'][3], data['shape'][1], data['shape'][2])
         output_shape = (data['shape'][0], -1)
 
-        # data['z'] = data['z'] + self.sigma * (2 * data['x'] - data['x_prev'])
+        data['z'] = data['z'] + self.sigma * (2 * data['x'] - data['x_prev'])
         data['z'] = self.relu_1(self.conv_1(data['z'].view(input_shape)))
         data['z'] = self.relu_2(self.conv_2(data['z'])).view(output_shape)
 
@@ -163,7 +143,7 @@ class conv_block(nn.Module):
 
         res = []
         res.append(nn.Conv2d(channels, channels, kernel_size, padding=1))
-        res.append(nn.ReLU(inplace=True))
+        res.append(nn.LeakyReLU(inplace=True))
         res.append(nn.Conv2d(channels, channels, kernel_size, padding=1))
 
         self.res = nn.Sequential(*res)

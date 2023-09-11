@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.optimizer import Optimizer
 from torch.utils.data import DataLoader
 from lightning.pytorch import LightningModule, LightningDataModule
 from lightning.pytorch.utilities import grad_norm
@@ -10,10 +9,10 @@ from src.layers import U_PDGH
 
 
 class U_PDHG_system(LightningModule):
-    def __init__(self, lr, N, cfa, spectral_stencil, kernel_size) -> None:
+    def __init__(self, lr, N, cfa, spectral_stencil, nb_channels, kernel_size) -> None:
         super().__init__()
 
-        self.model = U_PDGH(N, cfa, spectral_stencil, kernel_size)
+        self.model = U_PDGH(N, cfa, spectral_stencil, nb_channels, kernel_size)
         self.lr = lr
         self.save_hyperparameters(ignore=['model'])
 
@@ -34,7 +33,7 @@ class U_PDHG_system(LightningModule):
         res = self.model(x)
         loss = nn.functional.mse_loss(gt, res)
 
-        self.log('val_loss', loss, prog_bar=True)
+        self.log('val_loss', loss, prog_bar=True, logger=False)
         self.logger.experiment.add_scalar('Loss/Val', loss, self.current_epoch)
 
         for name, params in self.named_parameters():
@@ -43,6 +42,9 @@ class U_PDHG_system(LightningModule):
             if name.endswith('tau'):
                 self.logger.experiment.add_scalar(f'Tau/{name_list[2]}', params, self.current_epoch)
 
+            elif name.endswith('sigma'):
+                self.logger.experiment.add_scalar(f'Sigma/{name_list[2]}', params, self.current_epoch)
+
             else:
                 self.logger.experiment.add_histogram(f'{".".join(name_list[:-1])}/{name_list[-1]}', params, self.current_epoch)
     
@@ -50,10 +52,7 @@ class U_PDHG_system(LightningModule):
         x, gt = batch
         res = self.model(x)
 
-        self.log('test_loss', nn.functional.mse_loss(gt, res))
-
-    def train_dataloader(self):
-        return super().train_dataloader()
+        self.log('test_loss', nn.functional.mse_loss(gt, res), logger=False)
     
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
@@ -70,6 +69,9 @@ class U_PDHG_system(LightningModule):
 
                 if 'tau' in key:
                     self.logger.experiment.add_scalar(f'Tau/{name_list[-2]}_grad', value, self.current_epoch)
+
+                elif 'sigma' in key:
+                    self.logger.experiment.add_scalar(f'Sigma/{name_list[-2]}_grad', value, self.current_epoch)
 
                 else:
                     self.logger.experiment.add_scalar(f'{".".join(name_list[:-1])}/{name_list[-1]}_grad', value, self.current_epoch)
