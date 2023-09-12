@@ -14,6 +14,7 @@ class U_PDHG_system(LightningModule):
 
         self.model = U_PDGH(N, cfa, spectral_stencil, nb_channels, kernel_size)
         self.lr = lr
+        self.loss = nn.functional.mse_loss
         self.save_hyperparameters(ignore=['model'])
 
     def forward(self, x):
@@ -22,7 +23,7 @@ class U_PDHG_system(LightningModule):
     def training_step(self, batch, batch_idx):
         x, gt = batch
         res = self.model(x)
-        loss = nn.functional.mse_loss(gt, res)
+        loss = self.loss(gt, res)
 
         self.logger.experiment.add_scalar('Loss/Train', loss, self.current_epoch)
 
@@ -31,7 +32,7 @@ class U_PDHG_system(LightningModule):
     def validation_step(self, batch, batch_idx):
         x, gt = batch
         res = self.model(x)
-        loss = nn.functional.mse_loss(gt, res)
+        loss = self.loss(gt, res)
 
         self.log('val_loss', loss, prog_bar=True, logger=False)
         self.logger.experiment.add_scalar('Loss/Val', loss, self.current_epoch)
@@ -52,7 +53,7 @@ class U_PDHG_system(LightningModule):
         x, gt = batch
         res = self.model(x)
 
-        self.log('test_loss', nn.functional.mse_loss(gt, res), logger=False)
+        self.log('test_loss', self.loss(gt, res), logger=False)
     
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)

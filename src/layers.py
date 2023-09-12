@@ -15,10 +15,12 @@ class U_PDGH(nn.Module):
         self.data = dict()
 
         layers = []
+        first_layer = primal_layer()
         second_layer = dual_layer(len(spectral_stencil), nb_channels, kernel_size)
+        # second_layer = dual_layer(len(spectral_stencil), kernel_size)
 
         for _ in range(N):
-            layers.append(primal_layer())
+            layers.append(first_layer)
             layers.append(second_layer)
 
         self.layers = nn.Sequential(*layers)
@@ -37,8 +39,8 @@ class U_PDGH(nn.Module):
         self.data['AT'] = self.data['A'].T
         self.data['AAT'] = torch.tensor((A_scipy @ A_scipy.T).todia().data, dtype=x.dtype, device=self.device).squeeze()
 
-        self.data['ATy'] = (self.data['AT'] @ x.view(x.shape[0], -1).T).T
-        self.data['x'] = x_0.reshape(x.shape[0], -1)
+        self.data['ATy'] = (self.data['AT'] @ x.view(self.data['shape'][0], -1).T).T
+        self.data['x'] = x_0.reshape(self.data['shape'][0], -1)
         self.data['z'] = torch.zeros_like(self.data['x'])
 
     def forward(self, x):
@@ -46,8 +48,8 @@ class U_PDGH(nn.Module):
 
         self.data = self.layers(self.data)
 
-        return torch.clamp(self.data['x'].view(x.shape[0], x.shape[1], x.shape[2], -1), 0, 1)
-    
+        return torch.clamp(self.data['x'].view(self.data['shape']), 0, 1)
+
 
 class primal_layer(nn.Module):
     def __init__(self) -> None:
@@ -69,13 +71,13 @@ class primal_layer(nn.Module):
 
 
 class dual_layer(nn.Module):
-    def __init__(self, C, mid_channel_nb, kernel_size) -> None:
+    def __init__(self, C, nb_channels, kernel_size) -> None:
         super().__init__()
 
         self.sigma = nn.Parameter(torch.tensor(0.1))
-        self.conv_1 = nn.Conv2d(C, mid_channel_nb, kernel_size, padding=1)
+        self.conv_1 = nn.Conv2d(C, nb_channels, kernel_size, padding=1)
         self.relu_1 = nn.LeakyReLU(inplace=True)
-        self.conv_2 = nn.Conv2d(mid_channel_nb, C, kernel_size, padding=1)
+        self.conv_2 = nn.Conv2d(nb_channels, C, kernel_size, padding=1)
         self.relu_2 = nn.LeakyReLU(inplace=True)
 
     def forward(self, data):
@@ -96,6 +98,7 @@ class dual_layer_(nn.Module):
         self.sigma = nn.Parameter(torch.tensor(0.1))
 
         self.conv_0 = nn.Conv2d(in_channels, 16, kernel_size, padding=1)
+
         self.conv_1 = conv_block(16, kernel_size)
         self.down_1 = down_block(16, 32, kernel_size)
         self.conv_2 = conv_block(32, kernel_size)
