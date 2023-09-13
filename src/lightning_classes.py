@@ -76,7 +76,7 @@ class U_PDHG_system(LightningModule):
 
                 else:
                     self.logger.experiment.add_scalar(f'{".".join(name_list[:-1])}/{name_list[-1]}_grad', value, self.current_epoch)
-    
+
 
 class DataModule(LightningDataModule):
     def __init__(self, train_dataset, val_dataset, test_dataset, batch_size=16) -> None:

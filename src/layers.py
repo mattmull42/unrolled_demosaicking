@@ -17,7 +17,6 @@ class U_PDGH(nn.Module):
         layers = []
         first_layer = primal_layer()
         second_layer = dual_layer(len(spectral_stencil), nb_channels, kernel_size)
-        # second_layer = dual_layer(len(spectral_stencil), kernel_size)
 
         for _ in range(N):
             layers.append(first_layer)
@@ -48,7 +47,7 @@ class U_PDGH(nn.Module):
 
         self.data = self.layers(self.data)
 
-        return torch.clamp(self.data['x'].view(self.data['shape']), 0, 1)
+        return self.data['x'].view(self.data['shape'])
 
 
 class primal_layer(nn.Module):

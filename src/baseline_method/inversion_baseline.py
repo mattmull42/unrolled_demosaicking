@@ -6,10 +6,8 @@ from src.forward_operator.operators.misc.cfa_masks import *
 
 
 class Inverse_problem:
-    def __init__(self, cfa, binning, noise_level, output_size, spectral_stencil, filters):
+    def __init__(self, cfa, output_size, spectral_stencil, filters):
         self.cfa = cfa
-        self.binning = binning
-        self.noise_level = noise_level
         self.output_size = output_size
 
         if self.cfa == 'bayer':
@@ -25,37 +23,29 @@ class Inverse_problem:
     def __call__(self, image):
         self.input = image
 
-        if len(self.input.shape) != 2:
-            raise Exception('Input must be a 2 dimensional matrix.')
-
-        if self.binning:
-            self.apply_upscaling()
-            self.output_sparse_channel = self.cfa_mask * self.output_upscaling[..., np.newaxis]
-
-        else:
-            if self.cfa in ['bayer', 'quad_bayer']:
-                self.output_sparse_channel = self.cfa_mask * self.input[..., np.newaxis]
-
-            elif self.cfa == 'sparse_3':
-                self.output_sparse_channel = np.zeros(self.output_size)
-                self.output_sparse_channel[:, :, 0] = self.input
-                self.output_sparse_channel[:, :, 1] = self.input
-                self.output_sparse_channel[:, :, 2] = self.input
-
-                self.output_sparse_channel[::8, ::8, 1:3] = 0
-
-                self.output_sparse_channel[::8, 4::8, ::2] = 0
-                self.output_sparse_channel[4::8, ::8, ::2] = 0
-
-                self.output_sparse_channel[4::8, 4::8, 0:2] = 0
-
         if self.cfa == 'bayer':
+            self.output_sparse_channel = self.cfa_mask * self.input[..., np.newaxis]
+
             self.apply_bayer_demosaicing()
 
         elif self.cfa == 'quad_bayer':
+            self.output_sparse_channel = self.cfa_mask * self.input[..., np.newaxis]
+
             self.apply_quad_demosaicing()
 
         elif self.cfa == 'sparse_3':
+            self.output_sparse_channel = np.zeros(self.output_size)
+            self.output_sparse_channel[:, :, 0] = self.input
+            self.output_sparse_channel[:, :, 1] = self.input
+            self.output_sparse_channel[:, :, 2] = self.input
+
+            self.output_sparse_channel[::8, ::8, 1:3] = 0
+
+            self.output_sparse_channel[::8, 4::8, ::2] = 0
+            self.output_sparse_channel[4::8, ::8, ::2] = 0
+
+            self.output_sparse_channel[4::8, 4::8, 0:2] = 0
+
             self.apply_sparse_3_demosaicing()
 
         elif self.cfa == 'kodak':
@@ -137,8 +127,6 @@ class Inverse_problem:
 
         self.output_demosaicing = RGB_LF_HR + (W_HR - Y_LF_HR)[..., np.newaxis]
 
-        np.clip(self.output_demosaicing, 0, 1, self.output_demosaicing)
-
     
     def apply_kodak_demosaicing(self):
             y_interp = np.zeros(self.output_size)
@@ -180,8 +168,6 @@ class Inverse_problem:
 
             self.output_demosaicing = y_interp + (W_HR - Y_LF_HR)[:, :, np.newaxis]
 
-            np.clip(self.output_demosaicing, 0, 1, self.output_demosaicing)
-
     
     def apply_sony_demosaicing(self):
             y_interp = np.zeros(self.output_size)
@@ -222,16 +208,3 @@ class Inverse_problem:
             Y_LF_HR = np.mean(y_interp, axis=2)
 
             self.output_demosaicing = y_interp + (W_HR - Y_LF_HR)[:, :, np.newaxis]
-
-            np.clip(self.output_demosaicing, 0, 1, self.output_demosaicing)
-
-
-    def apply_upscaling(self):
-        if self.cfa == 'quad_bayer':
-            self.output_upscaling = np.repeat(np.repeat(self.input, 2, axis=0), 2, axis=1)
-
-            if self.output_size[0] % 2:
-                self.output_upscaling = self.output_upscaling[:-1]
-
-            if self.output_size[1] % 2:
-                self.output_upscaling = self.output_upscaling[:, :-1]
