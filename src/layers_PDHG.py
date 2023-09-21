@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from src.forward_operator.operators import *
+from src.forward_operator.operators import cfa_operator
 
 
 class U_PDGH(nn.Module):
@@ -10,13 +10,13 @@ class U_PDGH(nn.Module):
         super().__init__()
 
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.data = dict()
         self.cfa = cfa
         self.spectral_stencil = spectral_stencil
-        self.data = dict()
 
         layers = []
         first_layer = primal_layer()
-        second_layer = dual_layer(len(spectral_stencil), nb_channels, kernel_size)
+        second_layer = dual_layer(3, nb_channels, kernel_size)
 
         for _ in range(N):
             layers.append(first_layer)
@@ -25,10 +25,7 @@ class U_PDGH(nn.Module):
         self.layers = nn.Sequential(*layers)
 
     def setup_operator(self, x):
-        x_0 = x[:, :, :, 1:]
-        x = x[:, :, :, :1].squeeze(axis=-1)
-
-        self.data['shape'] = (x.shape[0], x.shape[1], x.shape[2], len(self.spectral_stencil))
+        self.data['shape'] = (x.shape[0], x.shape[1], x.shape[2], 3)
 
         op = cfa_operator(self.cfa, self.data['shape'][1:], self.spectral_stencil, 'dirac')
         A_scipy = op.matrix.tocoo()
@@ -39,7 +36,7 @@ class U_PDGH(nn.Module):
         self.data['AAT'] = torch.tensor((A_scipy @ A_scipy.T).todia().data, dtype=x.dtype, device=self.device).squeeze()
 
         self.data['ATy'] = (self.data['AT'] @ x.view(self.data['shape'][0], -1).T).T
-        self.data['x'] = x_0.reshape(self.data['shape'][0], -1)
+        self.data['x'] = self.data['ATy'].clone()
         self.data['z'] = torch.zeros_like(self.data['x'])
 
     def forward(self, x):

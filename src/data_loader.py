@@ -4,6 +4,8 @@ from PIL import Image
 import torch
 from torch.utils.data import Dataset
 
+from src.forward_operator.operators import *
+
 
 RGB_SPECTRAL_STENCIL = np.array([650, 525, 480])
 
@@ -29,15 +31,14 @@ def data_loader_rgb(input_dir: str, scale: int):
 
 
 class RGBDataset(Dataset):
-    def __init__(self, images_dir, scale, transform, baseline_inversion):
+    def __init__(self, images_dir, scale, transform):
         self.images_dir = images_dir
         self.transform = transform
-        self.baseline_inversion = baseline_inversion
         self.data = data_loader_rgb(images_dir, scale)
 
     def __len__(self):
         return len(self.data)
-    
+
     def __getitem__(self, index):
         gt = self.data[index]
 
@@ -46,6 +47,4 @@ class RGBDataset(Dataset):
 
         x = self.transform(gt)
 
-        x_0 = self.baseline_inversion(x)
-
-        return torch.tensor(np.concatenate((x[:, :, None], x_0), axis=2), dtype=torch.float), torch.tensor(gt, dtype=torch.float)
+        return torch.tensor(x, dtype=torch.float), torch.tensor(gt, dtype=torch.float)
