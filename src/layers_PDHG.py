@@ -5,7 +5,7 @@ import numpy as np
 from src.forward_operator.operators import cfa_operator
 
 
-class U_PDGH(nn.Module):
+class U_PDHG(nn.Module):
     def __init__(self, N, cfa, spectral_stencil, nb_channels, kernel_size) -> None:
         super().__init__()
 

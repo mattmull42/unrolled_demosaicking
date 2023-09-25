@@ -5,15 +5,20 @@ from lightning.pytorch import LightningModule, LightningDataModule
 from lightning.pytorch.utilities import grad_norm
 from os import cpu_count
 
-# from src.layers_PDHG import U_PDGH as network
-from src.layers_ADMM import U_ADMM as network
+from src.layers_PDHG import U_PDHG
+from src.layers_ADMM import U_ADMM
 
 
 class UnrolledSystem(LightningModule):
-    def __init__(self, lr, N, cfa, spectral_stencil, nb_channels, kernel_size) -> None:
+    def __init__(self, lr, algorithm, N, cfa, spectral_stencil, nb_channels, kernel_size) -> None:
         super().__init__()
 
-        self.model = network(N, cfa, spectral_stencil, nb_channels, kernel_size)
+        if algorithm == 'U_PDHG':
+            self.model = U_PDHG(N, cfa, spectral_stencil, nb_channels, kernel_size)
+
+        elif algorithm == 'U_ADMM':
+            self.model = U_ADMM(N, cfa, spectral_stencil, nb_channels, kernel_size)
+
         self.lr = lr
         self.loss = nn.functional.mse_loss
         self.save_hyperparameters(ignore=['model'])
