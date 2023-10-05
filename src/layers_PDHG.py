@@ -17,7 +17,6 @@ class U_PDHG(nn.Module):
 
         layers = []
         first_layer = PrimalBlock()
-        second_layer = DualBlock(3, nb_channels)
 
         for _ in range(N):
             layers.append(first_layer)

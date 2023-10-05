@@ -17,12 +17,11 @@ class U_ADMM(nn.Module):
 
         layers = []
         first_layer = PrimalBlock()
-        second_layer = AuxiliaryBlock(3, nb_channels)
         third_layer = MultiplierBlock()
 
         for _ in range(N):
             layers.append(first_layer)
-            layers.append(second_layer)
+            layers.append(AuxiliaryBlock(3, nb_channels))
             layers.append(third_layer)
 
         self.layers = nn.Sequential(*layers)
