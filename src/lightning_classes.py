@@ -10,14 +10,14 @@ from src.layers_ADMM import U_ADMM
 
 
 class UnrolledSystem(LightningModule):
-    def __init__(self, lr, algorithm, N, cfa, spectral_stencil, nb_channels, kernel_size) -> None:
+    def __init__(self, lr, algorithm, N, cfa, spectral_stencil, nb_channels) -> None:
         super().__init__()
 
         if algorithm == 'U_PDHG':
-            self.model = U_PDHG(N, cfa, spectral_stencil, nb_channels, kernel_size)
+            self.model = U_PDHG(N, cfa, spectral_stencil, nb_channels)
 
         elif algorithm == 'U_ADMM':
-            self.model = U_ADMM(N, cfa, spectral_stencil, nb_channels, kernel_size)
+            self.model = U_ADMM(N, cfa, spectral_stencil, nb_channels)
 
         self.lr = lr
         self.loss = nn.functional.mse_loss
@@ -63,7 +63,7 @@ class UnrolledSystem(LightningModule):
     
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, threshold=1e-6)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer)
 
         return [optimizer], [{'scheduler': scheduler, 'monitor': 'val_loss'}]
     
