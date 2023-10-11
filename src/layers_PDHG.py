@@ -18,11 +18,13 @@ class U_PDHG(nn.Module):
         layers = []
         first_layer = PrimalBlock()
 
-        for _ in range(N):
+        for _ in range(N - 1):
             layers.append(first_layer)
             layers.append(DualBlock(3, nb_channels))
 
-        self.layers = nn.Sequential(*layers)
+        layers.append(first_layer)
+
+        self.layers = nn.ModuleList(layers)
 
     def setup_operator(self, x):
         self.data['shape'] = (x.shape[0], x.shape[1], x.shape[2], 3)
@@ -41,10 +43,15 @@ class U_PDHG(nn.Module):
 
     def forward(self, x):
         self.setup_operator(x)
+        res = []
 
-        self.data = self.layers(self.data)
+        for i in range(len(self.layers)):
+            self.data = self.layers[i](self.data)
 
-        return self.data['x'].view(self.data['shape'])
+            if i % 2 == 0:
+                res.append(self.data['x'].view(self.data['shape']))
+
+        return res
 
 
 class PrimalBlock(nn.Module):
