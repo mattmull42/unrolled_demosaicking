@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
 
 from src.forward_operator.operators import cfa_operator
 
@@ -29,19 +28,15 @@ class U_ADMM(nn.Module):
         self.layers = nn.ModuleList(layers)
 
     def setup_operator(self, x):
-        self.data['shape'] = (x.shape[0], x.shape[1], x.shape[2], 3)
+        mask = cfa_operator(self.cfa, (x.shape[1], x.shape[2], 3), self.spectral_stencil, 'dirac').cfa_mask
+        mask = torch.tensor(mask, dtype=x.dtype, device=self.device).permute(2, 0, 1)[None]
 
-        op = cfa_operator(self.cfa, self.data['shape'][1:], self.spectral_stencil, 'dirac')
-        A_scipy = op.matrix.tocoo()
-        A = torch.sparse_coo_tensor(np.vstack((A_scipy.row, A_scipy.col)), A_scipy.data, A_scipy.shape, dtype=x.dtype, device=self.device).coalesce()
-
-        self.data['A'] = A
-        self.data['AT'] = self.data['A'].T
-        self.data['AAT'] = torch.tensor((A_scipy @ A_scipy.T).todia().data, dtype=x.dtype, device=self.device).squeeze()
-
-        self.data['ATy'] = (self.data['AT'] @ x.view(self.data['shape'][0], -1).T).T
+        self.data['mask'] = mask
+        ones = torch.ones_like(x)
+        self.data['AAT'] = direct(mask, adjoint(mask, ones)) / ones
+        self.data['ATy'] = adjoint(mask, x)
         self.data['x'] = self.data['ATy'].clone()
-        self.data['z'] = torch.zeros_like(self.data['x'])
+        self.data['z'] = self.data['ATy'].clone()
         self.data['beta'] = torch.zeros_like(self.data['x'])
 
     def forward(self, x):
@@ -52,7 +47,7 @@ class U_ADMM(nn.Module):
             self.data = self.layers[i](self.data)
 
             if i % 3 == 0:
-                res.append(self.data['x'].view(self.data['shape']))
+                res.append(self.data['x'].permute(0, 2, 3, 1))
 
         return res
 
@@ -64,14 +59,15 @@ class PrimalBlock(nn.Module):
         self.rho = nn.Parameter(torch.tensor(0.1))
 
     def forward(self, data):
-        data['x'] = data['ATy'] + self.rho * (data['z'] - data['beta'])
+        res = data['ATy'] + self.rho * (data['z'] - data['beta'])
 
-        tmp = (data['A'] @ data['x'].T).T
+        tmp = direct(data['mask'], res)
         tmp /= (self.rho + data['AAT'])
-        tmp = (data['AT'] @ tmp.T).T
+        tmp = adjoint(data['mask'], tmp)
 
-        data['x'] -= tmp
-        data['x'] /= self.rho
+        res -= tmp
+        res /= self.rho
+        data['x'] += res
 
         return data
 
@@ -99,12 +95,9 @@ class AuxiliaryBlock_(nn.Module):
         self.relu_2 = nn.LeakyReLU(inplace=True)
 
     def forward(self, data):
-        input_shape = (data['shape'][0], data['shape'][3], data['shape'][1], data['shape'][2])
-        output_shape = (data['shape'][0], -1)
-
-        tmp = (data['x'] + data['beta']).view(input_shape)
+        tmp = (data['x'] + data['beta'])
         tmp = self.relu_1(self.bn(self.conv_1(tmp)))
-        data['z'] += self.relu_2(self.conv_2(tmp)).view(output_shape)
+        data['z'] += self.relu_2(self.conv_2(tmp))
 
         return data
 
@@ -113,21 +106,19 @@ class AuxiliaryBlock(nn.Module):
     def __init__(self, C, nb_channels) -> None:
         super().__init__()
 
-        self.conv_1 = nn.Conv2d(C, nb_channels, 3, padding=1, bias=False)
-        self.bn = nn.BatchNorm2d(nb_channels)
-        self.relu_1 = nn.LeakyReLU(inplace=True)
-        self.conv_2 = nn.Conv2d(nb_channels, C, 3, padding=1, bias=False)
-        self.relu_2 = nn.LeakyReLU(inplace=True)
+        self.inc = DoubleConv(C, nb_channels)
+        self.down = Down(nb_channels, nb_channels)
+        self.up = Up(nb_channels * 2, nb_channels)
+        self.outc = DoubleConv(nb_channels, C)
 
     def forward(self, data):
-        input_shape = (data['shape'][0], data['shape'][3], data['shape'][1], data['shape'][2])
-        output_shape = (data['shape'][0], -1)
-
-        data['z'] = (data['x'] + data['beta']).view(input_shape)
-        x1 = self.inc(x1)
+        res = (data['x'] + data['beta'])
+        x1 = self.inc(res)
         x2 = self.down(x1)
-        data['z'] = self.up(x2, x1)
-        data['z'] = self.outc(data['z']).view(output_shape)
+        res = self.up(x2, x1)
+        res = self.outc(res)
+
+        data['z'] += res
 
         return data
 
@@ -190,3 +181,11 @@ class Up(nn.Module):
         x = torch.cat([x2, x1], dim=1)
 
         return self.conv(x)
+
+
+def direct(A, x):
+    return torch.sum(A * x, dim=1)
+
+
+def adjoint(A, x):
+    return A * x[:, None, :, :]

@@ -2,23 +2,18 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from lightning.pytorch import LightningModule, LightningDataModule
-from lightning.pytorch.utilities import grad_norm
+import numpy as np
+import matplotlib.pyplot as plt
 from os import cpu_count
 
-from src.layers_PDHG import U_PDHG
 from src.layers_ADMM import U_ADMM
 
 
 class UnrolledSystem(LightningModule):
-    def __init__(self, lr, algorithm, N, cfa, spectral_stencil, nb_channels) -> None:
+    def __init__(self, lr, N, cfa, spectral_stencil, nb_channels) -> None:
         super().__init__()
 
-        if algorithm == 'U_PDHG':
-            self.model = U_PDHG(N, cfa, spectral_stencil, nb_channels)
-
-        elif algorithm == 'U_ADMM':
-            self.model = U_ADMM(N, cfa, spectral_stencil, nb_channels)
-
+        self.model = U_ADMM(N, cfa, spectral_stencil, nb_channels)
         self.lr = lr
         self.loss = nn.functional.mse_loss
         self.save_hyperparameters(ignore=['model'])
@@ -48,18 +43,6 @@ class UnrolledSystem(LightningModule):
 
         self.log('val_loss', loss, prog_bar=True, logger=False)
         self.logger.experiment.add_scalar('Loss/Val', loss, self.current_epoch)
-
-        for name, params in self.named_parameters():
-            name_list = name.split('.')
-
-            if name.endswith('tau'):
-                self.logger.experiment.add_scalar(f'Tau/{name_list[2]}', params, self.current_epoch)
-
-            elif name.endswith('sigma'):
-                self.logger.experiment.add_scalar(f'Sigma/{name_list[2]}', params, self.current_epoch)
-
-            else:
-                self.logger.experiment.add_histogram(f'{".".join(name_list[:-1])}/{name_list[-1]}', params, self.current_epoch)
     
     def test_step(self, batch, batch_idx):
         x, gt = batch
@@ -78,20 +61,23 @@ class UnrolledSystem(LightningModule):
         return [optimizer], [{'scheduler': scheduler, 'monitor': 'val_loss'}]
     
     def on_before_optimizer_step(self, optimizer):
-        norms = grad_norm(self, norm_type=2)
+        if self.global_step % (7 * 20) == 0:
+            ratios(self, self.current_epoch)
 
-        for key, value in norms.items():
-            if 'grad_2.0_norm_total' != key:
-                name_list = key.split('/')[1].split('.')
+        for name, params in self.named_parameters():
+            name_list = name.split('.')
 
-                if 'tau' in key:
-                    self.logger.experiment.add_scalar(f'Tau/{name_list[-2]}_grad', value, self.current_epoch)
+            if name.endswith('rho'):
+                self.logger.experiment.add_scalar(f'Rho/{name_list[2]}', params, self.current_epoch)
+                self.logger.experiment.add_scalar(f'Rho/{name_list[2]}_grad', params.grad.norm(2), self.current_epoch)
 
-                elif 'sigma' in key:
-                    self.logger.experiment.add_scalar(f'Sigma/{name_list[-2]}_grad', value, self.current_epoch)
+            elif name.endswith('eta'):
+                self.logger.experiment.add_scalar(f'Eta/{name_list[2]}', params, self.current_epoch)
+                self.logger.experiment.add_scalar(f'Eta/{name_list[2]}_grad', params.grad.norm(2), self.current_epoch)
 
-                else:
-                    self.logger.experiment.add_scalar(f'{".".join(name_list[:-1])}/{name_list[-1]}_grad', value, self.current_epoch)
+            else:
+                self.logger.experiment.add_histogram(f'{".".join(name_list[:-1])}/{name_list[-1]}', params, self.current_epoch)
+                self.logger.experiment.add_scalar(f'{".".join(name_list[:-1])}/{name_list[-1]}_grad', params.grad.norm(2), self.current_epoch)
 
 
 class DataModule(LightningDataModule):
@@ -111,3 +97,29 @@ class DataModule(LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.test_dataset, self.batch_size, num_workers=cpu_count())
+
+
+def ratios(net, it):
+    ratios = [p.norm(2).numpy(force=True) / (p.grad.norm(2).numpy(force=True) + 1e-8) for _, p in net.named_parameters()]
+    ratios = np.array(ratios) + 1e-8
+    total = len(ratios)
+
+    low = np.count_nonzero(ratios < 1e-3)
+    high = np.count_nonzero(ratios > 1e3)
+    mid = total - low - high
+
+    title = (f'Weight / grad ratio of the different layers at iteration {it:04d}\n'
+             f'Sane gradients:  {mid} ({(mid / total):.2%})    '
+             f'Exploding gradients: {low} ({(low / total):.2%})     '
+             f'Vanishing gradients: {high} ({(high / total):.2%})'
+    )
+
+    plt.figure(figsize=(20, 4))
+    plt.semilogy(ratios, 'x')
+    plt.axhline(y=1e3, color='r', linestyle='-', label='Vanishing gradient threshold')
+    plt.axhline(y=1e-3, color='b', linestyle='-', label='Exploding gradient threshold')
+    plt.title(title)
+    plt.xlabel('Layer number')
+    plt.ylabel('Weight / grad ratio')
+    plt.legend()
+    plt.show()
