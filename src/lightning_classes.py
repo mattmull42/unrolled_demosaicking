@@ -61,23 +61,26 @@ class UnrolledSystem(LightningModule):
         return [optimizer], [{'scheduler': scheduler, 'monitor': 'val_loss'}]
     
     def on_before_optimizer_step(self, optimizer):
-        if self.global_step % (7 * 20) == 0:
+        nb_batches = 7
+
+        if self.global_step % (nb_batches * 50) == 0:
             ratios(self, self.current_epoch)
 
-        for name, params in self.named_parameters():
-            name_list = name.split('.')
+        if self.global_step % (nb_batches * 3) == 0:
+            for name, params in self.named_parameters():
+                name_list = name.split('.')
 
-            if name.endswith('rho'):
-                self.logger.experiment.add_scalar(f'Rho/{name_list[2]}', params, self.current_epoch)
-                self.logger.experiment.add_scalar(f'Rho/{name_list[2]}_grad', params.grad.norm(2), self.current_epoch)
+                if name.endswith('rho'):
+                    self.logger.experiment.add_scalar(f'Rho/{name_list[2]}', params, self.current_epoch)
+                    self.logger.experiment.add_scalar(f'Rho/{name_list[2]}_grad', params.grad.norm(2), self.current_epoch)
 
-            elif name.endswith('eta'):
-                self.logger.experiment.add_scalar(f'Eta/{name_list[2]}', params, self.current_epoch)
-                self.logger.experiment.add_scalar(f'Eta/{name_list[2]}_grad', params.grad.norm(2), self.current_epoch)
+                elif name.endswith('eta'):
+                    self.logger.experiment.add_scalar(f'Eta/{name_list[2]}', params, self.current_epoch)
+                    self.logger.experiment.add_scalar(f'Eta/{name_list[2]}_grad', params.grad.norm(2), self.current_epoch)
 
-            else:
-                self.logger.experiment.add_histogram(f'{".".join(name_list[:-1])}/{name_list[-1]}', params, self.current_epoch)
-                self.logger.experiment.add_scalar(f'{".".join(name_list[:-1])}/{name_list[-1]}_grad', params.grad.norm(2), self.current_epoch)
+                else:
+                    self.logger.experiment.add_histogram(f'{".".join(name_list[:-1])}/{name_list[-1]}', params, self.current_epoch)
+                    self.logger.experiment.add_scalar(f'{".".join(name_list[:-1])}/{name_list[-1]}_grad', params.grad.norm(2), self.current_epoch)
 
 
 class DataModule(LightningDataModule):
