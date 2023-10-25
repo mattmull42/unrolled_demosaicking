@@ -1,18 +1,12 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
-from src.forward_operator.operators import cfa_operator
 
 
 class U_ADMM(nn.Module):
-    def __init__(self, N, cfa, spectral_stencil, nb_channels) -> None:
+    def __init__(self, N, nb_channels) -> None:
         super().__init__()
 
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.data = dict()
-        self.cfa = cfa
-        self.spectral_stencil = spectral_stencil
 
         layers = []
         first_layer = PrimalBlock()
@@ -28,13 +22,11 @@ class U_ADMM(nn.Module):
         self.layers = nn.ModuleList(layers)
 
     def setup_operator(self, x):
-        mask = cfa_operator(self.cfa, (x.shape[1], x.shape[2], 3), self.spectral_stencil, 'dirac').cfa_mask
-        mask = torch.tensor(mask, dtype=x.dtype, device=self.device).permute(2, 0, 1)[None]
-
-        self.data['mask'] = mask
+        self.data['mask'] = x[:, 1:]
+        x = x[:, 0]
         ones = torch.ones_like(x)
-        self.data['AAT'] = direct(mask, adjoint(mask, ones)) / ones
-        self.data['ATy'] = adjoint(mask, x)
+        self.data['AAT'] = direct(self.data['mask'], adjoint(self.data['mask'], ones)) / ones
+        self.data['ATy'] = adjoint(self.data['mask'], x)
         self.data['x'] = self.data['ATy'].clone()
         self.data['z'] = self.data['ATy'].clone()
         self.data['beta'] = torch.zeros_like(self.data['x'])
@@ -47,7 +39,7 @@ class U_ADMM(nn.Module):
             self.data = self.layers[i](self.data)
 
             if i % 3 == 0:
-                res.append(self.data['x'].permute(0, 2, 3, 1))
+                res.append(self.data['x'])
 
         return res
 
@@ -176,7 +168,7 @@ class Up(nn.Module):
         diffY = x2.size()[2] - x1.size()[2]
         diffX = x2.size()[3] - x1.size()[3]
 
-        x1 = F.pad(x1, [diffX // 2, diffX - diffX // 2,
+        x1 = nn.functional.pad(x1, [diffX // 2, diffX - diffX // 2,
                         diffY // 2, diffY - diffY // 2])
         x = torch.cat([x2, x1], dim=1)
 

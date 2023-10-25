@@ -1,4 +1,4 @@
-import torch.nn as nn
+from torch.nn.functional import mse_loss
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from lightning.pytorch import LightningModule, LightningDataModule
@@ -10,12 +10,12 @@ from src.layers_ADMM import U_ADMM
 
 
 class UnrolledSystem(LightningModule):
-    def __init__(self, lr, N, cfa, spectral_stencil, nb_channels) -> None:
+    def __init__(self, lr, N, nb_channels) -> None:
         super().__init__()
 
-        self.model = U_ADMM(N, cfa, spectral_stencil, nb_channels)
+        self.model = U_ADMM(N, nb_channels)
         self.lr = lr
-        self.loss = nn.functional.mse_loss
+        self.loss = mse_loss
         self.save_hyperparameters(ignore=['model'])
 
     def forward(self, x):
@@ -56,17 +56,17 @@ class UnrolledSystem(LightningModule):
     
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5)
 
         return [optimizer], [{'scheduler': scheduler, 'monitor': 'val_loss'}]
     
     def on_before_optimizer_step(self, optimizer):
-        nb_batches = 7
+        nb_batches = 110
 
-        if self.global_step % (nb_batches * 50) == 0:
+        if self.global_step % (nb_batches * 5) == 0:
             ratios(self, self.current_epoch)
 
-        if self.global_step % (nb_batches * 3) == 0:
+        if self.global_step % (nb_batches * 2) == 0:
             for name, params in self.named_parameters():
                 name_list = name.split('.')
 
