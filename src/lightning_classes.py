@@ -63,9 +63,6 @@ class UnrolledSystem(LightningModule):
     def on_before_optimizer_step(self, optimizer):
         nb_batches = 394
 
-        if self.global_step % (nb_batches * 10) == 0:
-            ratios(self, self.current_epoch)
-
         if self.global_step % (nb_batches * 2) == 0:
             for name, params in self.named_parameters():
                 name_list = name.split('.')
@@ -84,7 +81,7 @@ class UnrolledSystem(LightningModule):
 
 
 class DataModule(LightningDataModule):
-    def __init__(self, train_dataset, val_dataset, test_dataset, batch_size=16) -> None:
+    def __init__(self, train_dataset, val_dataset, test_dataset, batch_size) -> None:
         super().__init__()
 
         self.train_dataset = train_dataset
