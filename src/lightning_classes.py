@@ -61,9 +61,9 @@ class UnrolledSystem(LightningModule):
         return [optimizer], [{'scheduler': scheduler, 'monitor': 'val_loss'}]
     
     def on_before_optimizer_step(self, optimizer):
-        nb_batches = 110
+        nb_batches = 394
 
-        if self.global_step % (nb_batches * 5) == 0:
+        if self.global_step % (nb_batches * 10) == 0:
             ratios(self, self.current_epoch)
 
         if self.global_step % (nb_batches * 2) == 0:
