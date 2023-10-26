@@ -21,7 +21,7 @@ class UnrolledSystem(LightningModule):
     def forward(self, x):
         return self.model(x)
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch):
         x, gt = batch
         res = self.model(x)
         loss = 0
@@ -32,8 +32,8 @@ class UnrolledSystem(LightningModule):
         self.logger.experiment.add_scalar('Loss/Train', loss, self.current_epoch)
 
         return loss
-    
-    def validation_step(self, batch, batch_idx):
+
+    def validation_step(self, batch):
         x, gt = batch
         res = self.model(x)
         loss = 0
@@ -43,8 +43,8 @@ class UnrolledSystem(LightningModule):
 
         self.log('val_loss', loss, prog_bar=True, logger=False)
         self.logger.experiment.add_scalar('Loss/Val', loss, self.current_epoch)
-    
-    def test_step(self, batch, batch_idx):
+
+    def test_step(self, batch):
         x, gt = batch
         res = self.model(x)
         loss = 0
@@ -53,13 +53,13 @@ class UnrolledSystem(LightningModule):
             loss += self.loss(gt, output)
 
         self.log('test_loss', loss, logger=False)
-    
+
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, threshold=1e-5)
 
         return [optimizer], [{'scheduler': scheduler, 'monitor': 'val_loss'}]
-    
+
     def on_before_optimizer_step(self, optimizer):
         nb_batches = 394
 
