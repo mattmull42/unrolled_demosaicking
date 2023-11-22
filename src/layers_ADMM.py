@@ -39,7 +39,7 @@ class U_ADMM(nn.Module):
             self.data = self.layers[i](self.data)
 
             if i % 3 == 0:
-                res.append(self.data['x'])
+                res.append(self.data['x'].clone())
 
         return res
 

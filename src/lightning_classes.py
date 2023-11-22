@@ -46,13 +46,9 @@ class UnrolledSystem(LightningModule):
 
     def test_step(self, batch):
         x, gt = batch
-        res = self.model(x)
-        loss = 0
-
-        for output in res:
-            loss += self.loss(gt, output)
-
-        self.log('test_loss', loss, logger=False)
+        res = self.model(x)[-1]
+        
+        self.log('test_loss', self.loss(gt, res))
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
