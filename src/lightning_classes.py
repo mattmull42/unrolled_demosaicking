@@ -43,7 +43,7 @@ class UnrolledSystem(LightningModule):
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, threshold=1e-5)
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, threshold=1e-5)
 
         return [optimizer], [{'scheduler': scheduler, 'monitor': 'Loss/Val'}]
 
