@@ -31,13 +31,9 @@ class UnrolledSystem(LightningModule):
 
     def validation_step(self, batch):
         x, gt = batch
-        res = self.model(x)
-        loss = 0
-
-        for output in res:
-            loss += self.loss(gt, output)
-
-        self.log('Loss/Val', loss, prog_bar=True)
+        res = self.model(x)[-1]
+        
+        self.log('Loss/Val', self.loss(gt, res))
 
     def test_step(self, batch):
         x, gt = batch
@@ -49,7 +45,7 @@ class UnrolledSystem(LightningModule):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, threshold=1e-5)
 
-        return [optimizer], [{'scheduler': scheduler, 'monitor': 'val_loss'}]
+        return [optimizer], [{'scheduler': scheduler, 'monitor': 'Loss/Val'}]
 
 
 class DataModule(LightningDataModule):

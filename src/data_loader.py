@@ -10,15 +10,7 @@ from src.forward_operator.operators import cfa_operator
 RGB_SPECTRAL_STENCIL = np.array([650, 525, 480])
 
 
-def data_loader_rgb(input_dir: str, patch_size: int, stride: int):
-    """load rgb dataset from the input directory.
-
-    Args:
-        input_dir (str): data location
-
-    Yields:
-        (np.ndarray, str) : (image as an array, image name)
-    """
+def data_loader_rgb(input_dir, patch_size, stride):
     res = []
 
     for image_path in listdir(input_dir):
