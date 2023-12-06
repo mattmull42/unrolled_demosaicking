@@ -32,7 +32,8 @@ def data_loader_rgb(input_dir: str, patch_size: int, stride: int):
     return torch.cat(res)
 
 
-class RGBDataset(Dataset):
+# Draws a random shift each time. Equivalent to all the shifts but in random form
+class RGBDataset_(Dataset):
     def __init__(self, images_dir, cfas, patch_size, stride):
         self.images_dir = images_dir
         self.cfas = []
@@ -64,7 +65,7 @@ class RGBDataset(Dataset):
 
 
 # Gets all the shifts, not ideal as it causes too much samples
-class RGBDataset_(Dataset):
+class RGBDataset(Dataset):
     def __init__(self, images_dir, cfas, patch_size, stride):
         self.images_dir = images_dir
         self.cfas = []

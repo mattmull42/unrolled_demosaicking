@@ -27,8 +27,6 @@ class UnrolledSystem(LightningModule):
         for output in res:
             loss += self.loss(gt, output)
 
-        self.logger.experiment.add_scalar('Loss/Train', loss, self.current_epoch)
-
         return loss
 
     def validation_step(self, batch):
@@ -39,14 +37,13 @@ class UnrolledSystem(LightningModule):
         for output in res:
             loss += self.loss(gt, output)
 
-        self.log('val_loss', loss, prog_bar=True, logger=False)
-        self.logger.experiment.add_scalar('Loss/Val', loss, self.current_epoch)
+        self.log('Loss/Val', loss, prog_bar=True)
 
     def test_step(self, batch):
         x, gt = batch
         res = self.model(x)[-1]
         
-        self.log('test_loss', self.loss(gt, res))
+        self.log('Loss/Test', self.loss(gt, res))
 
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=self.lr)
@@ -72,3 +69,4 @@ class DataModule(LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader(self.test_dataset, self.batch_size, num_workers=cpu_count())
+    
