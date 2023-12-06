@@ -45,9 +45,9 @@ class RGBDataset(Dataset):
                 s = 4
 
             matrix = cfa_operator(cfa, (patch_size + s, patch_size + s, 3), RGB_SPECTRAL_STENCIL, 'dirac').cfa_mask
-            self.cfas.append(to_tensor(matrix[i:i + patch_size, j:j + patch_size])
+            self.cfas.append(list(to_tensor(matrix[i:i + patch_size, j:j + patch_size])
                              for i in range(matrix.shape[0] - patch_size)
-                             for j in range(matrix.shape[1] - patch_size))
+                             for j in range(matrix.shape[1] - patch_size)))
 
         self.l_i = len(self.data)
         self.l_c = len(self.cfas)
@@ -63,7 +63,7 @@ class RGBDataset(Dataset):
         return torch.cat([x[None], cfa]), gt
 
 
-# Gets all the shifts, not ideal as it causes too mush samples
+# Gets all the shifts, not ideal as it causes too much samples
 class RGBDataset_(Dataset):
     def __init__(self, images_dir, cfas, patch_size, stride):
         self.images_dir = images_dir
