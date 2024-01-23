@@ -33,7 +33,7 @@ class UnrolledSystem(LightningModule):
         x, gt = batch
         res = self.model(x)[-1]
         
-        self.log('Loss/Val', self.loss(gt, res))
+        self.log('Loss/Val', self.loss(gt, res), prog_bar=True)
 
     def test_step(self, batch):
         x, gt = batch
