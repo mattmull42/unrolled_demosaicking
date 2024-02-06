@@ -80,24 +80,6 @@ class AuxiliaryBlock_(nn.Module):
     def __init__(self, C, nb_channels) -> None:
         super().__init__()
 
-        self.conv_1 = nn.Conv2d(C, nb_channels, 3, padding=1, bias=False)
-        self.bn = nn.BatchNorm2d(nb_channels)
-        self.relu_1 = nn.LeakyReLU(inplace=True)
-        self.conv_2 = nn.Conv2d(nb_channels, C, 3, padding=1, bias=False)
-        self.relu_2 = nn.LeakyReLU(inplace=True)
-
-    def forward(self, data):
-        tmp = (data['x'] + data['beta'])
-        tmp = self.relu_1(self.bn(self.conv_1(tmp)))
-        data['z'] += self.relu_2(self.conv_2(tmp))
-
-        return data
-
-
-class AuxiliaryBlock(nn.Module):
-    def __init__(self, C, nb_channels) -> None:
-        super().__init__()
-
         self.inc = DoubleConv(C, nb_channels)
         self.down = Down(nb_channels, nb_channels)
         self.up = Up(nb_channels * 2, nb_channels)
@@ -108,6 +90,31 @@ class AuxiliaryBlock(nn.Module):
         x1 = self.inc(res)
         x2 = self.down(x1)
         res = self.up(x2, x1)
+        res = self.outc(res)
+
+        data['z'] += res
+
+        return data
+
+
+class AuxiliaryBlock(nn.Module):
+    def __init__(self, C, nb_channels) -> None:
+        super().__init__()
+
+        self.inc = DoubleConv(C, nb_channels)
+        self.down1 = Down(nb_channels, nb_channels * 2)
+        self.down2 = Down(nb_channels * 2, nb_channels * 2)
+        self.up3 = Up(nb_channels * 4, nb_channels)
+        self.up4 = Up(nb_channels * 2, nb_channels)
+        self.outc = DoubleConv(nb_channels, C)
+
+    def forward(self, data):
+        res = (data['x'] + data['beta'])
+        x1 = self.inc(res)
+        x2 = self.down1(x1)
+        x3 = self.down2(x2)
+        res = self.up3(x3, x2)
+        res = self.up4(res, x1)
         res = self.outc(res)
 
         data['z'] += res
@@ -160,7 +167,6 @@ class Up(nn.Module):
 
         self.up = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
         self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
-
 
     def forward(self, x1, x2):
         x1 = self.up(x1)
