@@ -76,36 +76,17 @@ class MultiplierBlock(nn.Module):
         return data
 
 
-class AuxiliaryBlock_(nn.Module):
-    def __init__(self, C, nb_channels) -> None:
-        super().__init__()
-
-        self.inc = DoubleConv(C, nb_channels)
-        self.down = Down(nb_channels, nb_channels)
-        self.up = Up(nb_channels * 2, nb_channels)
-        self.outc = DoubleConv(nb_channels, C)
-
-    def forward(self, data):
-        res = (data['x'] + data['beta'])
-        x1 = self.inc(res)
-        x2 = self.down(x1)
-        res = self.up(x2, x1)
-        res = self.outc(res)
-
-        data['z'] += res
-
-        return data
-
-
 class AuxiliaryBlock(nn.Module):
     def __init__(self, C, nb_channels) -> None:
         super().__init__()
 
         self.inc = DoubleConv(C, nb_channels)
         self.down1 = Down(nb_channels, nb_channels * 2)
-        self.down2 = Down(nb_channels * 2, nb_channels * 2)
-        self.up3 = Up(nb_channels * 4, nb_channels)
-        self.up4 = Up(nb_channels * 2, nb_channels)
+        self.down2 = Down(nb_channels * 2, nb_channels * 4)
+        self.down3 = Down(nb_channels * 4, nb_channels * 4)
+        self.up1 = Up(nb_channels * 8, nb_channels * 2)
+        self.up2 = Up(nb_channels * 4, nb_channels)
+        self.up3 = Up(nb_channels * 2, nb_channels)
         self.outc = DoubleConv(nb_channels, C)
 
     def forward(self, data):
@@ -113,8 +94,11 @@ class AuxiliaryBlock(nn.Module):
         x1 = self.inc(res)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
-        res = self.up3(x3, x2)
-        res = self.up4(res, x1)
+        x4 = self.down3(x3)
+
+        res = self.up1(x4, x3)
+        res = self.up2(res, x2)
+        res = self.up3(res, x1)
         res = self.outc(res)
 
         data['z'] += res
