@@ -59,7 +59,7 @@ class PrimalBlock(nn.Module):
 
         res -= tmp
         res /= self.rho
-        data['x'] += res
+        data['x'] = res
 
         return data
 

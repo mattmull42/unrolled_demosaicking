@@ -10,11 +10,14 @@ from src.forward_operator.operators import cfa_operator
 RGB_SPECTRAL_STENCIL = np.array([650, 525, 480])
 
 
-def data_loader_rgb(input_dir, patch_size, stride):
+def data_loader_rgb(input_dir, patch_size=None, stride=None):
     res = []
+    images = [to_tensor(imread(path.join(input_dir, image_path)) / 255) for image_path in listdir(input_dir)]
 
-    for image_path in listdir(input_dir):
-        image = to_tensor(imread(path.join(input_dir, image_path)) / 255)
+    if patch_size is None and stride is None:
+        return torch.cat(images)
+
+    for image in images:
         res.append(image[None].unfold(2, patch_size, stride)
                    .unfold(3, patch_size, stride)
                    .permute(2, 3, 0, 1, 4, 5)
@@ -24,13 +27,13 @@ def data_loader_rgb(input_dir, patch_size, stride):
 
 
 class RGBDataset(Dataset):
-    def __init__(self, images_dir, cfas, patch_size, stride):
+    def __init__(self, images_dir, cfas, patch_size=None, stride=None):
         self.images_dir = images_dir
         self.cfas = []
         self.data = data_loader_rgb(images_dir, patch_size, stride)
 
         for cfa in cfas:
-            matrix = cfa_operator(cfa, (patch_size, patch_size, 3), RGB_SPECTRAL_STENCIL, 'dirac').cfa_mask
+            matrix = cfa_operator(cfa, (self.data[0].shape[0], self.data[0].shape[1], 3), RGB_SPECTRAL_STENCIL, 'dirac').cfa_mask
             self.cfas.append(to_tensor(matrix))
 
         self.l_i = len(self.data)
