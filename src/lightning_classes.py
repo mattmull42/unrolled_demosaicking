@@ -58,11 +58,11 @@ class DataModule(LightningDataModule):
         self.batch_size = batch_size
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, self.batch_size, True, num_workers=cpu_count())
+        return DataLoader(self.train_dataset, self.batch_size, True, num_workers=min(32, cpu_count()))
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, self.batch_size, num_workers=cpu_count())
+        return DataLoader(self.val_dataset, self.batch_size, num_workers=min(32, cpu_count()))
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, self.batch_size, num_workers=cpu_count())
+        return DataLoader(self.test_dataset, self.batch_size, num_workers=min(32, cpu_count()))
     

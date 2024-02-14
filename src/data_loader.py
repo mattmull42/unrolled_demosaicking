@@ -31,7 +31,6 @@ class RGBDataset(Dataset):
         self.images_dir = images_dir
         self.cfas = []
         self.data = data_loader_rgb(images_dir, patch_size, stride)
-        print(self.data[0].shape)
 
         for cfa in cfas:
             matrix = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], 3), RGB_SPECTRAL_STENCIL, 'dirac').cfa_mask
