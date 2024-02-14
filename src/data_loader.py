@@ -15,7 +15,7 @@ def data_loader_rgb(input_dir, patch_size=None, stride=None):
     images = [to_tensor(imread(path.join(input_dir, image_path)) / 255) for image_path in listdir(input_dir)]
 
     if patch_size is None and stride is None:
-        return torch.cat(images)
+        return torch.stack(images)
 
     for image in images:
         res.append(image[None].unfold(2, patch_size, stride)
@@ -31,9 +31,10 @@ class RGBDataset(Dataset):
         self.images_dir = images_dir
         self.cfas = []
         self.data = data_loader_rgb(images_dir, patch_size, stride)
+        print(self.data[0].shape)
 
         for cfa in cfas:
-            matrix = cfa_operator(cfa, (self.data[0].shape[0], self.data[0].shape[1], 3), RGB_SPECTRAL_STENCIL, 'dirac').cfa_mask
+            matrix = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], 3), RGB_SPECTRAL_STENCIL, 'dirac').cfa_mask
             self.cfas.append(to_tensor(matrix))
 
         self.l_i = len(self.data)
