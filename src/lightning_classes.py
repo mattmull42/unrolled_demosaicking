@@ -49,20 +49,26 @@ class UnrolledSystem(LightningModule):
 
 
 class DataModule(LightningDataModule):
-    def __init__(self, train_dataset, val_dataset, test_dataset, batch_size) -> None:
+    def __init__(self, batch_size, train_dataset=None, val_dataset=None, test_dataset=None) -> None:
         super().__init__()
 
-        self.train_dataset = train_dataset
-        self.val_dataset = val_dataset
-        self.test_dataset = test_dataset
-        self.batch_size = batch_size
+        num_cpu = min(32, cpu_count())
+
+        if train_dataset is not None:
+            self.train_datal = DataLoader(train_dataset, batch_size, True, num_workers=num_cpu)
+
+        if val_dataset is not None:
+            self.val_datal = DataLoader(val_dataset, batch_size, num_workers=num_cpu)
+
+        if test_dataset is not None:
+            self.test_datal = DataLoader(test_dataset, batch_size, num_workers=num_cpu)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, self.batch_size, True, num_workers=min(32, cpu_count()))
+        return self.train_datal
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, self.batch_size, num_workers=min(32, cpu_count()))
+        return self.val_datal
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, self.batch_size, num_workers=min(32, cpu_count()))
+        return self.test_datal
     
