@@ -21,13 +21,11 @@ def get_filter_response(spectral_stencil: np.ndarray, responses_file: str, band:
     Returns:
         np.ndarray: The wanted filter.
     """
-
     if responses_file == 'dirac':
         return get_dirac_filter(spectral_stencil, band)
 
     else:
         array = np.load(path.join(DATA_DIR, responses_file))
-
         f = sp.interpolate.interp1d(array['spectral_stencil'], array['data'][band])
 
         return f(spectral_stencil)
@@ -43,7 +41,6 @@ def get_dirac_filter(spectral_stencil: np.ndarray, filter_type: str) -> np.ndarr
     Returns:
         np.ndarray: The wanted filter.
     """
-
     stencil = np.array(spectral_stencil)
 
     if filter_type == 'red':
@@ -52,8 +49,14 @@ def get_dirac_filter(spectral_stencil: np.ndarray, filter_type: str) -> np.ndarr
     elif filter_type == 'green':
         return np.eye(1, stencil.shape[0], np.abs(stencil - 525).argmin()).reshape(-1)
 
-    elif filter_type == 'blue':
+    elif filter_type == 'blue' or filter_type == 'cyan':
         return np.eye(1, stencil.shape[0], np.abs(stencil - 480).argmin()).reshape(-1)
+
+    elif filter_type == 'yellow':
+        return np.eye(1, stencil.shape[0], np.abs(stencil - 580).argmin()).reshape(-1)
+
+    elif filter_type == 'orange':
+        return np.eye(1, stencil.shape[0], np.abs(stencil - 600).argmin()).reshape(-1)
 
     elif filter_type == 'pan':
         return np.full_like(spectral_stencil, 1 /len(spectral_stencil), dtype=np.float64)

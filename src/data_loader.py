@@ -4,7 +4,7 @@ from skimage.io import imread
 import torch
 from torch.utils.data import Dataset
 
-from src.forward_operator.operators import cfa_operator
+from src.forward_model.operators import cfa_operator
 
 
 RGB_SPECTRAL_STENCIL = np.array([650, 525, 480])
@@ -33,7 +33,7 @@ class RGBDataset(Dataset):
         self.data = data_loader_rgb(images_dir, patch_size, stride)
 
         for cfa in cfas:
-            matrix = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], 3), RGB_SPECTRAL_STENCIL, 'dirac').cfa_mask
+            matrix = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], 3), RGB_SPECTRAL_STENCIL).cfa_mask
             self.cfas.append(to_tensor(matrix))
 
         self.l_i = len(self.data)

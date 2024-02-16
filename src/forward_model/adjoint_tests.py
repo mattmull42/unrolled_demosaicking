@@ -5,9 +5,9 @@ from time import perf_counter
 from colorama import Fore
 import numpy as np
 
-from .operators.abstract_operator import abstract_operator
-from .forward_operator import forward_operator
-from .operators import cfa_operator, binning_operator
+from operators.abstract_operator import abstract_operator
+from forward_operator import forward_operator
+from operators import cfa_operator, binning_operator
 
 
 INPUT_SHAPE = (513, 1043, 11)
@@ -112,8 +112,8 @@ def run_adjoint_tests() -> None:
 
     print(Fore.YELLOW + '######################## Beginning of the adjoint tests ########################' + Fore.WHITE)
 
-    cfa_test('bayer')
-    forward_test('bayer', False)
+    cfa_test('bayer_VRBV')
+    forward_test('bayer_VRBV', False)
 
     cfa_test('quad_bayer')
     forward_test('quad_bayer', False)
