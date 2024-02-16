@@ -9,17 +9,14 @@ from .abstract_operator import abstract_operator
 
 
 class binning_operator(abstract_operator):
-    def __init__(self, cfa: str, input_shape: tuple, name: str = None) -> None:
+    def __init__(self, cfa: str, input_shape: tuple) -> None:
         """Creates an instane of the binning_operator class.
 
         Args:
             cfa (str): The name of the CFA to be used.
             input_shape (tuple): The shape of the object the operator takes in input.
-            name (str, optional): A simple nametag for the operator. Defaults to None.
         """
-
         self.cfa = cfa
-        self.name = 'binning' if name is None else name
 
         if self.cfa == 'quad_bayer':
             self.l = 2
@@ -27,8 +24,7 @@ class binning_operator(abstract_operator):
         self.P_i = int(np.ceil(input_shape[0] / self.l))
         self.P_j = int(np.ceil(input_shape[1] / self.l))
 
-        super().__init__(input_shape, (self.P_i, self.P_j), self.name)
-
+        super().__init__(input_shape, (self.P_i, self.P_j))
 
     def direct(self, x: np.ndarray) -> np.ndarray:
         """A method method performing the computation of the operator.
@@ -39,12 +35,10 @@ class binning_operator(abstract_operator):
         Returns:
             np.ndarray: The output array. Must be of shape self.output_shape.
         """
-
         if self.cfa == 'quad_bayer':
             kernel = np.array([[1, 1], [1, 1]]) / 4
 
         return convolve2d(np.pad(x, ((0, self.l * self.P_i - x.shape[0]), (0, self.l * self.P_j - x.shape[1])), 'symmetric'), kernel, 'valid')[::self.l, ::self.l]
-
 
     def adjoint(self, y: np.ndarray) -> np.ndarray:
         """A method method performing the computation of the adjoint of the operator.
@@ -55,7 +49,6 @@ class binning_operator(abstract_operator):
         Returns:
             np.ndarray: The output array. Must be of shape self.input_shape.
         """
-
         res = np.repeat(np.repeat(y, self.l, axis=0), self.l, axis=1) / self.l**2
 
         tmp_i = self.input_shape[0] % self.l
@@ -72,7 +65,6 @@ class binning_operator(abstract_operator):
 
         return res
 
-
     @property
     def matrix(self) -> csr_array:
         """A method method giving the sparse matrix representation of the operator.
@@ -80,7 +72,6 @@ class binning_operator(abstract_operator):
         Returns:
             csr_array: The sparse matrix representing the operator.
         """
-
         N_ij = self.input_shape[0] * self.input_shape[1]
 
         if self.cfa == 'quad_bayer':

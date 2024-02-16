@@ -4,7 +4,7 @@
 import numpy as np
 from scipy.sparse import csr_array
 
-from .operators.abstract_operator import abstract_operator
+from operators.abstract_operator import abstract_operator
 
 
 class forward_operator(abstract_operator):
@@ -20,7 +20,6 @@ class forward_operator(abstract_operator):
 
         super().__init__(operator_list[0].input_shape, operator_list[-1].output_shape, self.name)
 
-
     def direct(self, x: np.ndarray) -> np.ndarray:
         """A method method performing the computation of the operator.
 
@@ -30,7 +29,6 @@ class forward_operator(abstract_operator):
         Returns:
             np.ndarray: The output array. Must be of shape self.output_shape.
         """
-
         res = x
 
         for operator in self.operator_list:
@@ -48,14 +46,12 @@ class forward_operator(abstract_operator):
         Returns:
             np.ndarray: The output array. Must be of shape self.input_shape.
         """
-
         res = y
 
         for operator in reversed(self.operator_list):
             res = operator.adjoint(res)
 
         return res
-
 
     @property
     def matrix(self) -> csr_array:
@@ -64,7 +60,6 @@ class forward_operator(abstract_operator):
         Returns:
             csr_array: The sparse matrix representing the operator.
         """
-
         mat = self.operator_list[0].matrix
 
         for operator in self.operator_list[1:]:
@@ -72,14 +67,12 @@ class forward_operator(abstract_operator):
 
         return mat
 
-
     def __str__(self) -> str:
         """Gives a simple description of the operator.
 
         Returns:
             str: A string describing the operator.
         """
-
         res = f'{self.name} operator of {type(self)} from {self.input_shape} to {self.output_shape} with the operators:'
 
         for operator in self.operator_list:
