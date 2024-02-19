@@ -2,7 +2,7 @@ from torch.nn.functional import mse_loss
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from lightning.pytorch import LightningModule, LightningDataModule
-from os import cpu_count
+from os import sched_getaffinity
 
 from src.layers_ADMM import U_ADMM
 
@@ -52,7 +52,7 @@ class DataModule(LightningDataModule):
     def __init__(self, batch_size, train_dataset=None, val_dataset=None, test_dataset=None) -> None:
         super().__init__()
 
-        num_cpu = min(32, cpu_count())
+        num_cpu = len(sched_getaffinity(0))
 
         if train_dataset is not None:
             self.train_datal = DataLoader(train_dataset, batch_size, True, num_workers=num_cpu)
