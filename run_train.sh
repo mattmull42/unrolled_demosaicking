@@ -7,7 +7,7 @@
 #OAR --project pr-fumultispoc
 #OAR -p gpumodel='A100'
 
-cd unrolled_demosaicking
+cd ~/unrolled_demosaicking
 
 python3 train.py
 
