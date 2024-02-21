@@ -1,6 +1,7 @@
-from torch.nn.functional import mse_loss
-import torch.optim as optim
+import torch
 from torch.utils.data import DataLoader
+from torchmetrics.regression import MeanSquaredError
+from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure
 from lightning.pytorch import LightningModule, LightningDataModule
 from os import sched_getaffinity
 
@@ -13,7 +14,10 @@ class UnrolledSystem(LightningModule):
 
         self.model = U_ADMM(N, nb_channels)
         self.lr = lr
-        self.loss = mse_loss
+        self.loss_mse = MeanSquaredError()
+        self.loss_psnr = PeakSignalNoiseRatio(data_range=1)
+        self.loss_ssim = StructuralSimilarityIndexMeasure()
+
         self.save_hyperparameters(ignore=['model'])
 
     def forward(self, x):
@@ -25,7 +29,7 @@ class UnrolledSystem(LightningModule):
         loss = 0
 
         for output in res:
-            loss += self.loss(gt, output)
+            loss += self.loss_mse(gt, output)
 
         return loss
 
@@ -33,17 +37,19 @@ class UnrolledSystem(LightningModule):
         x, gt = batch
         res = self.model(x)[-1]
         
-        self.log('Loss/Val', self.loss(gt, res), prog_bar=True)
+        self.log('Loss/Val', self.loss_mse(gt, res), prog_bar=True)
 
     def test_step(self, batch):
         x, gt = batch
         res = self.model(x)[-1]
-        
-        self.log('Loss/Test', self.loss(gt, res))
+
+        self.log('Loss/Test_mse', self.loss_mse(gt, res))
+        self.log('Loss/Test_psnr', self.loss_psnr(gt, res))
+        self.log('Loss/Test_ssim', self.loss_ssim(gt, res))
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=self.lr)
-        scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, threshold=1e-6)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, threshold=1e-6)
 
         return [optimizer], [{'scheduler': scheduler, 'monitor': 'Loss/Val'}]
 
