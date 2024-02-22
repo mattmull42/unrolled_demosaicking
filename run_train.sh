@@ -14,4 +14,3 @@ python3 train.py
 git add logs/*
 git commit -m "Added new training"
 git push
-
