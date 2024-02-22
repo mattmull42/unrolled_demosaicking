@@ -15,7 +15,7 @@ class UnrolledSystem(LightningModule):
         self.model = U_ADMM(N, nb_channels)
         self.lr = lr
         self.loss_mse = MeanSquaredError()
-        self.loss_psnr = PeakSignalNoiseRatio(data_range=1, reduction=None, dim=0)
+        self.loss_psnr = PeakSignalNoiseRatio(data_range=1, reduction=None, dim=(1, 2, 3))
         self.loss_ssim = StructuralSimilarityIndexMeasure(data_range=1, reduction=None)
 
         self.save_hyperparameters(ignore=['model'])
