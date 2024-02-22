@@ -336,3 +336,89 @@ def get_yamagami_mask(input_shape: tuple, spectral_stencil: np.ndarray, response
     cfa_mask[2::4, 2::4] = blue_filter
 
     return cfa_mask
+
+
+def get_gindele_mask(input_shape: tuple, spectral_stencil: np.ndarray, responses_file: str) -> np.ndarray:
+    """Gives the Gindele CFA mask using the specified filters.
+
+    Args:
+        input_shape (tuple): The shape of the input. Will also be the shape of the mask.
+        spectral_stencil (np.ndarray): Wavelength values in nanometers at which the input is sampled.
+        responses_file (str): The name of the file in which the filters are. If 'dirac' then abstract dirac filters are used.
+
+    Returns:
+        np.ndarray: The Gindele mask.
+    """
+    band_r, band_g, band_b, band_p = get_rgbp_bands(responses_file)
+
+    red_filter = get_filter_response(spectral_stencil, responses_file, band_r)
+    green_filter = get_filter_response(spectral_stencil, responses_file, band_g)
+    blue_filter = get_filter_response(spectral_stencil, responses_file, band_b)
+    pan_filter = get_filter_response(spectral_stencil, responses_file, band_p)
+
+    cfa_mask = np.kron(np.ones((input_shape[0], input_shape[1], 1)), green_filter)
+
+    cfa_mask[::2, 1::2] = red_filter
+    cfa_mask[1::2, ::2] = blue_filter
+    cfa_mask[1::2, 1::2] = pan_filter
+
+    return cfa_mask
+
+
+def get_hamilton_mask(input_shape: tuple, spectral_stencil: np.ndarray, responses_file: str) -> np.ndarray:
+    """Gives the Hamilton CFA mask using the specified filters.
+
+    Args:
+        input_shape (tuple): The shape of the input. Will also be the shape of the mask.
+        spectral_stencil (np.ndarray): Wavelength values in nanometers at which the input is sampled.
+        responses_file (str): The name of the file in which the filters are. If 'dirac' then abstract dirac filters are used.
+
+    Returns:
+        np.ndarray: The Hamilton mask.
+    """
+    band_r, band_g, band_b, band_p = get_rgbp_bands(responses_file)
+
+    red_filter = get_filter_response(spectral_stencil, responses_file, band_r)
+    green_filter = get_filter_response(spectral_stencil, responses_file, band_g)
+    blue_filter = get_filter_response(spectral_stencil, responses_file, band_b)
+    pan_filter = get_filter_response(spectral_stencil, responses_file, band_p)
+
+    cfa_mask = np.kron(np.ones((input_shape[0], input_shape[1], 1)), pan_filter)
+
+    cfa_mask[::8, ::8] = red_filter
+    cfa_mask[1::8, 1::8] = red_filter
+    cfa_mask[2::8, 2::8] = red_filter
+    cfa_mask[3::8, 3::8] = red_filter
+    cfa_mask[2::8, ::8] = red_filter
+    cfa_mask[3::8, 1::8] = red_filter
+    cfa_mask[::8, 2::8] = red_filter
+    cfa_mask[1::8, 3::8] = red_filter
+
+    cfa_mask[::8, 4::8] = green_filter
+    cfa_mask[::8, 6::8] = green_filter
+    cfa_mask[1::8, 5::8] = green_filter
+    cfa_mask[1::8, 7::8] = green_filter
+    cfa_mask[2::8, 4::8] = green_filter
+    cfa_mask[2::8, 6::8] = green_filter
+    cfa_mask[3::8, 5::8] = green_filter
+    cfa_mask[3::8, 7::8] = green_filter
+
+    cfa_mask[4::8, ::8] = green_filter
+    cfa_mask[6::8, ::8] = green_filter
+    cfa_mask[5::8, 1::8] = green_filter
+    cfa_mask[7::8, 1::8] = green_filter
+    cfa_mask[4::8, 2::8] = green_filter
+    cfa_mask[6::8, 2::8] = green_filter
+    cfa_mask[5::8, 3::8] = green_filter
+    cfa_mask[7::8, 3::8] = green_filter
+
+    cfa_mask[4::8, 4::8] = blue_filter
+    cfa_mask[5::8, 5::8] = blue_filter
+    cfa_mask[6::8, 6::8] = blue_filter
+    cfa_mask[7::8, 7::8] = blue_filter
+    cfa_mask[6::8, 4::8] = blue_filter
+    cfa_mask[7::8, 5::8] = blue_filter
+    cfa_mask[4::8, 6::8] = blue_filter
+    cfa_mask[5::8, 7::8] = blue_filter
+
+    return cfa_mask
