@@ -422,3 +422,131 @@ def get_hamilton_mask(input_shape: tuple, spectral_stencil: np.ndarray, response
     cfa_mask[5::8, 7::8] = blue_filter
 
     return cfa_mask
+
+
+def get_luo_mask(input_shape: tuple, spectral_stencil: np.ndarray, responses_file: str) -> np.ndarray:
+    """Gives the Luo CFA mask using the specified filters.
+
+    Args:
+        input_shape (tuple): The shape of the input. Will also be the shape of the mask.
+        spectral_stencil (np.ndarray): Wavelength values in nanometers at which the input is sampled.
+        responses_file (str): The name of the file in which the filters are. If 'dirac' then abstract dirac filters are used.
+
+    Returns:
+        np.ndarray: The Luo mask.
+    """
+    band_r, band_g, band_b, band_p = get_rgbp_bands(responses_file)
+
+    red_filter = get_filter_response(spectral_stencil, responses_file, band_r)
+    green_filter = get_filter_response(spectral_stencil, responses_file, band_g)
+    blue_filter = get_filter_response(spectral_stencil, responses_file, band_b)
+    pan_filter = get_filter_response(spectral_stencil, responses_file, band_p)
+
+    cfa_mask = np.kron(np.ones((input_shape[0], input_shape[1], 1)), pan_filter)
+
+    cfa_mask[1::4, ::4] = red_filter
+    cfa_mask[1::4, 2::4] = red_filter
+
+    cfa_mask[::4, 1::4] = green_filter
+    cfa_mask[2::4, 1::4] = green_filter
+
+    cfa_mask[1::4, 1::4] = blue_filter
+
+    return cfa_mask
+
+
+def get_wang_mask(input_shape: tuple, spectral_stencil: np.ndarray, responses_file: str) -> np.ndarray:
+    """Gives the Wang CFA mask using the specified filters.
+
+    Args:
+        input_shape (tuple): The shape of the input. Will also be the shape of the mask.
+        spectral_stencil (np.ndarray): Wavelength values in nanometers at which the input is sampled.
+        responses_file (str): The name of the file in which the filters are. If 'dirac' then abstract dirac filters are used.
+
+    Returns:
+        np.ndarray: The Wang mask.
+    """
+    band_r, band_g, band_b, band_p = get_rgbp_bands(responses_file)
+
+    red_filter = get_filter_response(spectral_stencil, responses_file, band_r)
+    green_filter = get_filter_response(spectral_stencil, responses_file, band_g)
+    blue_filter = get_filter_response(spectral_stencil, responses_file, band_b)
+    pan_filter = get_filter_response(spectral_stencil, responses_file, band_p)
+
+    cfa_mask = np.kron(np.ones((input_shape[0], input_shape[1], 1)), pan_filter)
+
+    cfa_mask[2::5, ::5] = red_filter
+    cfa_mask[::5, 1::5] = red_filter
+    cfa_mask[1::5, 3::5] = red_filter
+    cfa_mask[3::5, 2::5] = red_filter
+    cfa_mask[4::5, 4::5] = red_filter
+
+    cfa_mask[3::5, ::5] = green_filter
+    cfa_mask[1::5, 1::5] = green_filter
+    cfa_mask[4::5, 2::5] = green_filter
+    cfa_mask[2::5, 3::5] = green_filter
+    cfa_mask[::5, 4::5] = green_filter
+
+    cfa_mask[4::5, ::5] = blue_filter
+    cfa_mask[2::5, 1::5] = blue_filter
+    cfa_mask[::5, 2::5] = blue_filter
+    cfa_mask[3::5, 3::5] = blue_filter
+    cfa_mask[1::5, 4::5] = blue_filter
+
+    return cfa_mask
+
+
+def get_yamanaka_mask(input_shape: tuple, spectral_stencil: np.ndarray, responses_file: str) -> np.ndarray:
+    """Gives the Yamanaka CFA mask using the specified filters.
+
+    Args:
+        input_shape (tuple): The shape of the input. Will also be the shape of the mask.
+        spectral_stencil (np.ndarray): Wavelength values in nanometers at which the input is sampled.
+        responses_file (str): The name of the file in which the filters are. If 'dirac' then abstract dirac filters are used.
+
+    Returns:
+        np.ndarray: The Yamanaka mask.
+    """
+    band_r, band_g, band_b, _ = get_rgbp_bands(responses_file)
+
+    red_filter = get_filter_response(spectral_stencil, responses_file, band_r)
+    green_filter = get_filter_response(spectral_stencil, responses_file, band_g)
+    blue_filter = get_filter_response(spectral_stencil, responses_file, band_b)
+
+    cfa_mask = np.kron(np.ones((input_shape[0], input_shape[1], 1)), green_filter)
+
+    cfa_mask[::2, 1::4] = red_filter
+    cfa_mask[1::2, 3::4] = red_filter
+
+    cfa_mask[1::2, 1::4] = blue_filter
+    cfa_mask[::2, 3::4] = blue_filter
+
+    return cfa_mask
+
+
+def get_lukak_mask(input_shape: tuple, spectral_stencil: np.ndarray, responses_file: str) -> np.ndarray:
+    """Gives the Lukak CFA mask using the specified filters.
+
+    Args:
+        input_shape (tuple): The shape of the input. Will also be the shape of the mask.
+        spectral_stencil (np.ndarray): Wavelength values in nanometers at which the input is sampled.
+        responses_file (str): The name of the file in which the filters are. If 'dirac' then abstract dirac filters are used.
+
+    Returns:
+        np.ndarray: The Lukak mask.
+    """
+    band_r, band_g, band_b, _ = get_rgbp_bands(responses_file)
+
+    red_filter = get_filter_response(spectral_stencil, responses_file, band_r)
+    green_filter = get_filter_response(spectral_stencil, responses_file, band_g)
+    blue_filter = get_filter_response(spectral_stencil, responses_file, band_b)
+
+    cfa_mask = np.kron(np.ones((input_shape[0], input_shape[1], 1)), green_filter)
+
+    cfa_mask[::4, 1::2] = red_filter
+    cfa_mask[2::4, ::2] = red_filter
+
+    cfa_mask[1::4, 1::2] = blue_filter
+    cfa_mask[3::4, ::2] = blue_filter
+
+    return cfa_mask

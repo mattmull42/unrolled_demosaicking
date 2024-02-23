@@ -8,7 +8,9 @@ from .abstract_operator import abstract_operator
 from .misc.cfa_masks import get_bayer_GRBG_mask, get_bayer_RGGB_mask, get_quad_mask,\
                             get_sparse_3_mask, get_kodak_mask, get_sony_mask,\
                             get_chakrabarti_mask, get_honda_mask, get_kaizu_mask,\
-                            get_yamagami_mask, get_gindele_mask, get_hamilton_mask
+                            get_yamagami_mask, get_gindele_mask, get_hamilton_mask,\
+                            get_wang_mask, get_luo_mask, get_yamanaka_mask,\
+                            get_lukak_mask
 
 
 class cfa_operator(abstract_operator):
@@ -55,6 +57,18 @@ class cfa_operator(abstract_operator):
 
         elif self.cfa == 'gindele':
             self.cfa_mask = get_gindele_mask(input_shape, spectral_stencil, filters)
+
+        elif self.cfa == 'wang':
+            self.cfa_mask = get_wang_mask(input_shape, spectral_stencil, filters)
+
+        elif self.cfa == 'luo':
+            self.cfa_mask = get_luo_mask(input_shape, spectral_stencil, filters)
+
+        elif self.cfa == 'yamanaka':
+            self.cfa_mask = get_yamanaka_mask(input_shape, spectral_stencil, filters)
+
+        elif self.cfa == 'lukak':
+            self.cfa_mask = get_lukak_mask(input_shape, spectral_stencil, filters)
 
         elif self.cfa == 'hamilton':
             self.cfa_mask = get_hamilton_mask(input_shape, spectral_stencil, filters)

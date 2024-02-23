@@ -13,7 +13,8 @@ if torch.cuda.get_device_name() == 'NVIDIA A100-PCIE-40GB':
     torch.set_float32_matmul_precision('high')
 
 # %%
-CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'sony', 'kodak', 'sparse_3', 'chakrabarti', 'honda', 'kaizu', 'yamagami'])
+CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'sony', 'kodak', 'sparse_3', 'chakrabarti',
+               'honda', 'kaizu', 'yamagami', 'gindele', 'hamilton', 'wang', 'yamanaka'])
 TRAIN_DIR = 'images/train'
 VAL_DIR = 'images/val'
 PATCH_SIZE = 64
