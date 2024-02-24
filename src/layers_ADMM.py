@@ -21,9 +21,8 @@ class U_ADMM(nn.Module):
 
         self.layers = nn.ModuleList(layers)
 
-    def setup_operator(self, x):
-        self.data['mask'] = x[:, 1:]
-        x = x[:, 0]
+    def setup_operator(self, x, mask):
+        self.data['mask'] = mask
         ones = torch.ones_like(x)
         self.data['AAT'] = direct(self.data['mask'], adjoint(self.data['mask'], ones)) / ones
         self.data['ATy'] = adjoint(self.data['mask'], x)
@@ -31,8 +30,8 @@ class U_ADMM(nn.Module):
         self.data['z'] = self.data['ATy'].clone()
         self.data['beta'] = torch.zeros_like(self.data['x'])
 
-    def forward(self, x):
-        self.setup_operator(x)
+    def forward(self, x, mask):
+        self.setup_operator(x, mask)
         res = []
 
         for i in range(len(self.layers)):

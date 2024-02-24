@@ -47,7 +47,7 @@ class RGBDataset(Dataset):
         cfa = self.cfas[index % self.l_c]
         x = torch.sum(cfa * gt, axis=0)
 
-        return torch.cat([x[None], cfa]), gt
+        return x, cfa, gt
 
 
 def to_tensor(img):
