@@ -39,7 +39,7 @@ class UnrolledSystem(LightningModule):
         
         self.log('Loss/Val', self.loss_mse(gt, res), prog_bar=True)
 
-    def test_step(self, batch):
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
         x, mask, gt = batch
         res = self.model(x, mask)[-1]
 
@@ -63,16 +63,14 @@ class DataModule(LightningDataModule):
     def __init__(self, batch_size, train_dataset=None, val_dataset=None, test_dataset=None) -> None:
         super().__init__()
 
-        num_cpu = len(sched_getaffinity(0))
-
         if train_dataset is not None:
-            self.train_datal = DataLoader(train_dataset, batch_size, True, num_workers=num_cpu)
+            self.train_datal = get_dataloarder(train_dataset, batch_size, True)
 
         if val_dataset is not None:
-            self.val_datal = DataLoader(val_dataset, batch_size, num_workers=num_cpu)
+            self.val_datal = get_dataloarder(val_dataset, batch_size)
 
         if test_dataset is not None:
-            self.test_datal = DataLoader(test_dataset, batch_size, num_workers=num_cpu)
+            self.test_datal = get_dataloarder(test_dataset, batch_size)
 
     def train_dataloader(self):
         return self.train_datal
@@ -83,3 +81,6 @@ class DataModule(LightningDataModule):
     def test_dataloader(self):
         return self.test_datal
     
+
+def get_dataloarder(dataset, batch_size, shuffle=False):
+    return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle, num_workers=len(sched_getaffinity(0)))
