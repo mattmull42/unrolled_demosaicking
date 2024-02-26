@@ -15,6 +15,7 @@ if torch.cuda.get_device_name() == 'NVIDIA A100-PCIE-40GB':
 # %%
 CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'sony', 'kodak', 'sparse_3', 'chakrabarti',
                'honda', 'kaizu', 'yamagami', 'gindele', 'hamilton', 'wang', 'yamanaka'])
+CFA_VARIANTS = True
 TRAIN_DIR = 'images/train'
 VAL_DIR = 'images/val'
 PATCH_SIZE = 64
@@ -25,8 +26,8 @@ LEARNING_RATE = 1e-2
 NB_EPOCHS = 200
 
 # %%
-train_dataset = RGBDataset(TRAIN_DIR, CFAS, PATCH_SIZE, PATCH_SIZE // 2)
-val_dataset = RGBDataset(VAL_DIR, CFAS)
+train_dataset = RGBDataset(TRAIN_DIR, CFAS, cfa_variants=CFA_VARIANTS, patch_size=PATCH_SIZE, stride=PATCH_SIZE // 2)
+val_dataset = RGBDataset(VAL_DIR, CFAS, cfa_variants=CFA_VARIANTS)
 data_module = DataModule(BATCH_SIZE, train_dataset, val_dataset)
 
 model = UnrolledSystem(lr=LEARNING_RATE, N=NB_STAGES, nb_channels=NB_CHANNELS)
@@ -41,3 +42,5 @@ lr_finder = pl.tuner.Tuner(trainer).lr_find(model, datamodule=data_module, num_t
 
 # %%
 trainer.fit(model, datamodule=data_module)
+
+

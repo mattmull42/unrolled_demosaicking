@@ -1,13 +1,13 @@
 from os import listdir, path
-import numpy as np
 import torch
 from torch.utils.data import Dataset
 from torchvision.io import read_image
 
 from src.forward_model.operators import cfa_operator
+from src.transformations import get_variants
 
 
-RGB_SPECTRAL_STENCIL = np.array([650, 525, 480])
+RGB_STENCIL = [650, 525, 480]
 
 
 def data_loader_rgb(input_dir, patch_size=None, stride=None):
@@ -27,20 +27,26 @@ def data_loader_rgb(input_dir, patch_size=None, stride=None):
 
 
 class RGBDataset(Dataset):
-    def __init__(self, images_dir, cfas, patch_size=None, stride=None):
+    def __init__(self, images_dir, cfas, cfa_variants=False, patch_size=None, stride=None):
         self.images_dir = images_dir
         self.cfas = []
         self.data = data_loader_rgb(images_dir, patch_size, stride)
 
         for cfa in cfas:
-            matrix = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], 3), RGB_SPECTRAL_STENCIL).mask
-            self.cfas.append(torch.Tensor(matrix).permute(2, 0, 1))
+            if cfa_variants:
+                pattern = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], self.data[0].shape[0]), RGB_STENCIL).pattern
+                self.cfas += get_variants(torch.Tensor(pattern).permute(2, 0, 1), self.data[0].shape)
+
+            else:
+                matrix = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], self.data[0].shape[0]), RGB_STENCIL).mask
+                self.cfas.append(torch.Tensor(matrix).permute(2, 0, 1))
 
         self.l_i = len(self.data)
         self.l_c = len(self.cfas)
+        self.l = self.l_i * self.l_c
 
     def __len__(self):
-        return self.l_i * self.l_c
+        return self.l
 
     def __getitem__(self, index):
         gt = self.data[index // self.l_c]
