@@ -24,8 +24,8 @@ class UnrolledSystem(LightningModule):
         return self.model(x)
 
     def training_step(self, batch):
-        x, gt = batch
-        res = self.model(x)
+        x, mask, gt = batch
+        res = self.model(x, mask)
         loss = 0
 
         for output in res:
@@ -34,14 +34,14 @@ class UnrolledSystem(LightningModule):
         return loss
 
     def validation_step(self, batch):
-        x, gt = batch
-        res = self.model(x)[-1]
+        x, mask, gt = batch
+        res = self.model(x, mask)[-1]
         
         self.log('Loss/Val', self.loss_mse(gt, res), prog_bar=True)
 
     def test_step(self, batch):
-        x, gt = batch
-        res = self.model(x)[-1]
+        x, mask, gt = batch
+        res = self.model(x, mask)[-1]
 
         psnr = self.loss_psnr(gt, res)
         ssim = self.loss_ssim(gt, res)
