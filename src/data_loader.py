@@ -33,7 +33,7 @@ class RGBDataset(Dataset):
         self.data = data_loader_rgb(images_dir, patch_size, stride)
 
         for cfa in cfas:
-            matrix = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], 3), RGB_SPECTRAL_STENCIL).cfa_mask
+            matrix = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], 3), RGB_SPECTRAL_STENCIL).mask
             self.cfas.append(to_tensor(matrix))
 
         self.l_i = len(self.data)

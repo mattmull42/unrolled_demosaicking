@@ -25,7 +25,7 @@ class cfa_operator(abstract_operator):
         n = input_shape[0] // self.pattern_shape[0] + (input_shape[0] % self.pattern_shape[0] != 0)
         m = input_shape[1] // self.pattern_shape[1] + (input_shape[1] % self.pattern_shape[1] != 0)
 
-        self.mask = np.kron(np.ones((n, m, 1)), self.pattern)[..., :input_shape[0], :input_shape[1]]
+        self.mask = np.kron(np.ones((n, m, 1)), self.pattern)[:input_shape[0], :input_shape[1]]
 
         super().__init__(input_shape, input_shape[:-1])
 
