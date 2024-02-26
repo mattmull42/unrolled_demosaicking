@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 from torchvision.io import read_image
 
 from src.forward_model.operators import cfa_operator
-from src.transformations import get_variants
+from src.utils import get_variants
 
 
 RGB_STENCIL = [650, 525, 480]
@@ -12,7 +12,12 @@ RGB_STENCIL = [650, 525, 480]
 
 def data_loader_rgb(input_dir, patch_size=None, stride=None):
     res = []
-    images = [read_image(path.join(input_dir, image_path)) / 255 for image_path in listdir(input_dir)]
+
+    if input_dir.endswith('.png') or input_dir.endswith('.jpg'):
+        images = [read_image(input_dir) / 255]
+
+    else:
+        images = [read_image(path.join(input_dir, image_path)) / 255 for image_path in listdir(input_dir)]
 
     if patch_size is None and stride is None:
         return torch.stack(images)
