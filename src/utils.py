@@ -7,12 +7,10 @@ from os import sched_getaffinity
 
 
 def format_output(output, crop=True):
-    output = torch.flatten(torch.stack(output).permute(1, 0, 2, 4, 5, 3), 1, 2)
+    output = torch.clip(torch.cat(output, dim=1).permute(0, 1, 3, 4, 2), 0, 1).numpy(force=True)
 
     if crop:
         output = output[..., 2:-2, 2:-2, :]
-
-    output = torch.clip(output, 0, 1).numpy(force=True)
     
     return output[0], output[1:]
 
