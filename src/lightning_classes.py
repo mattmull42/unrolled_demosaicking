@@ -20,8 +20,8 @@ class UnrolledSystem(LightningModule):
 
         self.save_hyperparameters(ignore=['model'])
 
-    def forward(self, x):
-        return self.model(x)
+    def forward(self, x, mask):
+        return self.model(x, mask)
 
     def training_step(self, batch):
         x, mask, gt = batch
