@@ -2,6 +2,7 @@ lightning
 matplotlib
 numpy
 scipy
+scikit-image
 torch
 torchmetrics
 torchvision
