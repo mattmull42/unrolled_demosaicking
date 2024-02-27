@@ -85,18 +85,18 @@ def reflection(pattern, out_shape, mode):
     elif mode == 'h':
         ref = horizontal_flip(pattern)
     else:
-        ref = rotate(vertical_flip(pattern), 90)
+        ref = rotate(vertical_flip(pattern), 90, expand=True)
 
     return get_mask(ref, out_shape)
 
 
 def rotation(pattern, out_shape, angle):
-    return get_mask(rotate(pattern, angle), out_shape)
+    return get_mask(rotate(pattern, angle, expand=True), out_shape)
 
 
 def get_variants(pattern, out_shape):
-    trans_row = max(4, pattern.shape[-2] // 8)
-    trans_col = max(4, pattern.shape[-1] // 8)
+    trans_row = max(3, pattern.shape[-2] // 8)
+    trans_col = max(3, pattern.shape[-1] // 8)
     reflect = ('v', 'h', 'd')
     rot = (90, 180, 270)
 
