@@ -23,9 +23,15 @@ def is_not_in_list(list, tensor):
     return not any([(tensor == variant).all() for variant in list if tensor.shape == variant.shape])
 
 
-def plot_psnr_stages(gt_list, x_hat_list, cfa):
-    for i in range(len(cfa)):
-        plt.plot([psnr(gt, x_hat) for gt, x_hat in zip(gt_list, x_hat_list[:, i])], label=cfa[i])
+def plot_psnr_stages(gt_list, x_hat_list, cfa, cfa_idx):
+    if len(cfa) != len(cfa_idx):
+        for i in range(len(gt_list)):
+            plt.plot([psnr(gt, x_hat) for gt, x_hat in zip(gt_list, x_hat_list[:, i])], 
+                     label=f'{cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}')
+
+    else:
+        for i in range(len(gt_list)):
+            plt.plot([psnr(gt, x_hat) for gt, x_hat in zip(gt_list, x_hat_list[:, i])], label=cfa[i])
 
     plt.title('PSNR in functions of the stages')
     plt.xlabel('Stages')
@@ -34,7 +40,7 @@ def plot_psnr_stages(gt_list, x_hat_list, cfa):
     plt.show()
 
 
-def plot_results(gt_list, x_hat_list, cfa, stage):
+def plot_results(gt_list, x_hat_list, cfa, cfa_idx, stage):
     nb_images = len(gt_list)
     nb_cols = int(nb_images**0.5)
     nb_rows = nb_images // nb_cols + (nb_images % nb_cols != 0)
@@ -46,8 +52,8 @@ def plot_results(gt_list, x_hat_list, cfa, stage):
         ax.imshow(x_hat_list[stage, i])
         ax.axis('off')
 
-        if cfa is None:
-            ax.set_title(f'PSNR: {psnr(gt_list[i], x_hat_list[stage, i]):.2f}dB')
+        if len(cfa) != len(cfa_idx):
+            ax.set_title((f'CFA: {cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i]):.2f}dB'))
 
         else:
             ax.set_title(f'CFA: {cfa[i]}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i]):.2f}dB')
