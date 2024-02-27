@@ -26,17 +26,17 @@ def is_not_in_list(list, tensor):
 def plot_psnr_stages(gt_list, x_hat_list, cfa, cfa_idx):
     if len(cfa) != len(cfa_idx):
         for i in range(len(gt_list)):
-            plt.plot([psnr(gt, x_hat) for gt, x_hat in zip(gt_list, x_hat_list[:, i])], 
+            plt.plot([psnr(gt, x_hat, data_range=1) for gt, x_hat in zip(gt_list, x_hat_list[:, i])], 
                      label=f'{cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}')
 
     else:
         for i in range(len(gt_list)):
-            plt.plot([psnr(gt, x_hat) for gt, x_hat in zip(gt_list, x_hat_list[:, i])], label=cfa[i])
+            plt.plot([psnr(gt, x_hat, data_range=1) for gt, x_hat in zip(gt_list, x_hat_list[:, i])], label=cfa[i])
 
-    plt.title('PSNR in functions of the stages')
+    plt.title('PSNR in function of the stages')
     plt.xlabel('Stages')
     plt.ylabel('PSNR (dB)')
-    plt.legend()
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), fancybox=True, shadow=True, ncol=4)
     plt.show()
 
 
@@ -53,10 +53,11 @@ def plot_results(gt_list, x_hat_list, cfa, cfa_idx, stage):
         ax.axis('off')
 
         if len(cfa) != len(cfa_idx):
-            ax.set_title((f'CFA: {cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i]):.2f}dB'))
+            ax.set_title((f'CFA: {cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}, '
+                          f'PSNR: {psnr(gt_list[i], x_hat_list[stage, i], data_range=1):.2f}dB'))
 
         else:
-            ax.set_title(f'CFA: {cfa[i]}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i]):.2f}dB')
+            ax.set_title(f'CFA: {cfa[i]}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i], data_range=1):.2f}dB')
 
     plt.show()
 
