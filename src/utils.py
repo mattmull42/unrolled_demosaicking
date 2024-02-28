@@ -119,8 +119,8 @@ def rotation(pattern, out_shape, angle):
 
 
 def get_variants(pattern, out_shape):
-    trans_row = max(3, pattern.shape[-2] // 8)
-    trans_col = max(3, pattern.shape[-1] // 8)
+    trans_row = max(4, pattern.shape[-2] // 8)
+    trans_col = max(4, pattern.shape[-1] // 8)
     reflect = ('v', 'h', 'd')
     rot = (90, 180, 270)
 
