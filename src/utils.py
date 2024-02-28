@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from torch.utils.data import DataLoader
 from torchvision.transforms.v2.functional import vertical_flip, horizontal_flip, rotate
 from skimage.metrics import peak_signal_noise_ratio as psnr
@@ -50,6 +51,28 @@ def plot_results(gt_list, x_hat_list, cfa, cfa_idx, stage):
     for i in range(nb_images):
         ax = fig.add_subplot(nb_rows, nb_cols, i + 1)
         ax.imshow(x_hat_list[stage, i])
+        ax.axis('off')
+
+        if len(cfa) != len(cfa_idx):
+            ax.set_title((f'CFA: {cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}, '
+                          f'PSNR: {psnr(gt_list[i], x_hat_list[stage, i], data_range=1):.2f}dB'))
+
+        else:
+            ax.set_title(f'CFA: {cfa[i]}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i], data_range=1):.2f}dB')
+
+    plt.show()
+
+
+def plot_error_maps(gt_list, x_hat_list, cfa, cfa_idx, stage, gain):
+    nb_images = len(gt_list)
+    nb_cols = int(nb_images**0.5)
+    nb_rows = nb_images // nb_cols + (nb_images % nb_cols != 0)
+
+    fig = plt.figure(1, figsize=(20, 20))
+
+    for i in range(nb_images):
+        ax = fig.add_subplot(nb_rows, nb_cols, i + 1)
+        ax.imshow(np.clip(np.abs(gt_list[i] - x_hat_list[stage, i]) * gain, 0, 1))
         ax.axis('off')
 
         if len(cfa) != len(cfa_idx):
