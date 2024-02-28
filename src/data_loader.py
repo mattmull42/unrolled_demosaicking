@@ -32,11 +32,12 @@ def data_loader_rgb(input_dir, patch_size=None, stride=None):
 
 
 class RGBDataset(Dataset):
-    def __init__(self, images_dir, cfas, cfa_variants=False, patch_size=None, stride=None):
+    def __init__(self, images_dir, cfas, cfa_variants=False, patch_size=None, stride=None, std=None):
         self.images_dir = images_dir
         self.cfas = []
         self.cfa_idx = []
         self.data = data_loader_rgb(images_dir, patch_size, stride)
+        self.std = std
 
         for i, cfa in enumerate(cfas):
             if cfa_variants:
@@ -61,5 +62,8 @@ class RGBDataset(Dataset):
         gt = self.data[index // self.l_c]
         cfa = self.cfas[index % self.l_c]
         x = torch.sum(cfa * gt, axis=0)
+
+        if self.std is not None:
+            x += torch.normal(0, self.std, size=x.shape)
 
         return x, cfa, gt
