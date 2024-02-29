@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #OAR -n Training
-#OAR -l /nodes=1/gpu=1,walltime=24:00:00
+#OAR -l /nodes=1/gpu=1,walltime=12:00:00
 #OAR --stdout %jobid%.out
 #OAR --stderr %jobid%.err
 #OAR --project pr-fumultispoc

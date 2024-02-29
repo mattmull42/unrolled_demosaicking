@@ -11,9 +11,8 @@ from src.utils import get_dataloader, set_matmul_precision
 set_matmul_precision()
 
 # %%
-CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'sony', 'kodak', 'sparse_3', 'chakrabarti',
-               'honda', 'kaizu', 'yamagami', 'gindele', 'hamilton', 'wang', 'yamanaka'])
-CFA_VARIANTS = True
+CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'lukac', 'yamanaka'])
+CFA_VARIANTS = False
 TRAIN_DIR = 'images/train'
 VAL_DIR = 'images/val'
 NOISE_STD = 0
