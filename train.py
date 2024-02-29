@@ -12,7 +12,7 @@ set_matmul_precision()
 
 # %%
 CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'lukac', 'yamanaka'])
-CFA_VARIANTS = False
+CFA_VARIANTS = True
 TRAIN_DIR = 'images/train'
 VAL_DIR = 'images/val'
 NOISE_STD = 0
