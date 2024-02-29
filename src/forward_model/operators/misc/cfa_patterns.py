@@ -509,15 +509,15 @@ def get_yamanaka_pattern(spectral_stencil: np.ndarray, responses_file: str) -> n
     return pattern
 
 
-def get_lukak_pattern(spectral_stencil: np.ndarray, responses_file: str) -> np.ndarray:
-    """Gives the Lukak CFA pattern using the specified filters.
+def get_lukac_pattern(spectral_stencil: np.ndarray, responses_file: str) -> np.ndarray:
+    """Gives the Lukac CFA pattern using the specified filters.
 
     Args:
         spectral_stencil (np.ndarray): Wavelength values in nanometers at which the input is sampled.
         responses_file (str): The name of the file in which the filters are. If 'dirac' then abstract dirac filters are used.
 
     Returns:
-        np.ndarray: The Lukak pattern.
+        np.ndarray: The Lukac pattern.
     """
     band_r, band_g, band_b, _ = get_rgbp_bands(responses_file)
 
@@ -532,5 +532,44 @@ def get_lukak_pattern(spectral_stencil: np.ndarray, responses_file: str) -> np.n
 
     pattern[1, 1] = blue_filter
     pattern[3, 0] = blue_filter
+
+    return pattern
+
+
+def get_xtrans_pattern(spectral_stencil: np.ndarray, responses_file: str) -> np.ndarray:
+    """Gives the Xtrans CFA pattern using the specified filters.
+
+    Args:
+        spectral_stencil (np.ndarray): Wavelength values in nanometers at which the input is sampled.
+        responses_file (str): The name of the file in which the filters are. If 'dirac' then abstract dirac filters are used.
+
+    Returns:
+        np.ndarray: The Xtrans pattern.
+    """
+    band_r, band_g, band_b, _ = get_rgbp_bands(responses_file)
+
+    red_filter = get_filter_response(spectral_stencil, responses_file, band_r)
+    green_filter = get_filter_response(spectral_stencil, responses_file, band_g)
+    blue_filter = get_filter_response(spectral_stencil, responses_file, band_b)
+
+    pattern = np.kron(np.ones((6, 6, 1)), green_filter)
+
+    pattern[0, 4] = red_filter
+    pattern[1, 0] = red_filter
+    pattern[1, 2] = red_filter
+    pattern[2, 4] = red_filter
+    pattern[3, 1] = red_filter
+    pattern[4, 3] = red_filter
+    pattern[4, 5] = red_filter
+    pattern[5, 1] = red_filter
+
+    pattern[0, 1] = blue_filter
+    pattern[1, 3] = blue_filter
+    pattern[1, 5] = blue_filter
+    pattern[2, 1] = blue_filter
+    pattern[3, 4] = blue_filter
+    pattern[4, 0] = blue_filter
+    pattern[4, 2] = blue_filter
+    pattern[5, 4] = blue_filter
 
     return pattern
