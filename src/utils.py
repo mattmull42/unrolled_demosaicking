@@ -27,12 +27,12 @@ def is_not_in_list(list, tensor):
 def plot_psnr_stages(gt_list, x_hat_list, cfa, cfa_idx):
     if len(cfa) != len(cfa_idx):
         for i in range(len(gt_list)):
-            plt.plot([psnr(gt, x_hat, data_range=1) for gt, x_hat in zip(gt_list, x_hat_list[:, i])], 
+            plt.plot([psnr(gt_list[i], x_hat, data_range=1) for x_hat in x_hat_list[:, i]], 
                      label=f'{cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}')
 
     else:
         for i in range(len(gt_list)):
-            plt.plot([psnr(gt, x_hat, data_range=1) for gt, x_hat in zip(gt_list, x_hat_list[:, i])], label=cfa[i])
+            plt.plot([psnr(gt_list[i], x_hat, data_range=1) for x_hat in x_hat_list[:, i]], label=cfa[i])
 
     plt.title('PSNR in function of the stages')
     plt.xlabel('Stages')
