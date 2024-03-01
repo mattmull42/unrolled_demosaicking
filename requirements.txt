@@ -1,8 +1,8 @@
 lightning
 matplotlib
 numpy
-scipy
 scikit-image
+scipy
 torch
 torchmetrics
 torchvision
