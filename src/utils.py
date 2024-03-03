@@ -97,52 +97,47 @@ def get_mask(pattern, out_shape):
     return torch.tile(pattern, (1, n, m))[:, :out_shape[-2], :out_shape[-1]]
 
 
-def translation(pattern, out_shape, bottom, right):
-    trans = get_mask(pattern, (out_shape[0], out_shape[1] + bottom, out_shape[2] + right))
+def translation(pattern, bottom, right):
+    trans = get_mask(pattern, (pattern.shape[0], pattern.shape[1] + bottom, pattern.shape[2] + right))
 
     return trans[:, bottom:, right:]
 
 
-def reflection(pattern, out_shape, mode):
+def reflection(pattern, mode):
     if mode == 'v':
-        ref = vertical_flip(pattern)
-    elif mode == 'h':
-        ref = horizontal_flip(pattern)
-    else:
-        ref = rotate(vertical_flip(pattern), 90, expand=True)
+        return vertical_flip(pattern)
 
-    return get_mask(ref, out_shape)
+    return horizontal_flip(pattern)
 
 
-def rotation(pattern, out_shape, angle):
-    return get_mask(rotate(pattern, angle, expand=True), out_shape)
+def rotation(pattern, angle):
+    return rotate(pattern, angle, expand=True)
 
 
-def get_variants(pattern, out_shape):
-    trans_row = max(4, pattern.shape[-2] // 8)
-    trans_col = max(4, pattern.shape[-1] // 8)
-    reflect = ('v', 'h', 'd')
-    rot = (90, 180, 270)
+def get_variants(pattern, out_shape, depth):
+    pattern_list = [pattern]
 
-    res = []
+    for d in range(depth):
+        nb_patterns = len(pattern_list)
 
-    for i in range(trans_row):
-        for j in range(trans_col):
-            translated = translation(pattern, out_shape, i, j)
+        for pattern_idx in range(nb_patterns):
+            for i in range(pattern.shape[-2]):
+                for j in range(pattern.shape[-1]):
+                    translated = translation(pattern_list[pattern_idx], i, j)
 
-            if is_not_in_list(res, translated):
-                    res.append(translated)
+                    if is_not_in_list(pattern_list, translated):
+                            pattern_list.append(translated)
 
-    for mode in reflect:
-        reflected = reflection(pattern, out_shape, mode)
+            for mode in ('v', 'h'):
+                reflected = reflection(pattern_list[pattern_idx], mode)
 
-        if is_not_in_list(res, reflected):
-            res.append(reflected)
+                if is_not_in_list(pattern_list, reflected):
+                    pattern_list.append(reflected)
 
-    for angle in rot:
-        rotated = rotation(pattern, out_shape, angle)
+            for angle in (90, 180, 270):
+                rotated = rotation(pattern_list[pattern_idx], angle)
 
-        if is_not_in_list(res, rotated):
-            res.append(rotated)
+                if is_not_in_list(pattern_list, rotated):
+                    pattern_list.append(rotated)
 
-    return res
+    return [get_mask(item, out_shape) for item in pattern_list]

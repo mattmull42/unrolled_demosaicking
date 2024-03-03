@@ -32,7 +32,7 @@ def data_loader_rgb(input_dir, patch_size=None, stride=None):
 
 
 class RGBDataset(Dataset):
-    def __init__(self, images_dir, cfas, cfa_variants=False, patch_size=None, stride=None, std=None):
+    def __init__(self, images_dir, cfas, cfa_variants=0, patch_size=None, stride=None, std=None):
         self.images_dir = images_dir
         self.cfas = []
         self.cfa_idx = []
@@ -40,16 +40,10 @@ class RGBDataset(Dataset):
         self.std = std
 
         for i, cfa in enumerate(cfas):
-            if cfa_variants:
-                pattern = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], self.data[0].shape[0]), RGB_STENCIL).pattern
-                variants = get_variants(torch.Tensor(pattern).permute(2, 0, 1), self.data[0].shape)
-                self.cfas += variants
-                self.cfa_idx += [i] * len(variants)
-
-            else:
-                matrix = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], self.data[0].shape[0]), RGB_STENCIL).mask
-                self.cfas.append(torch.Tensor(matrix).permute(2, 0, 1))
-                self.cfa_idx += [i]
+            pattern = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], self.data[0].shape[0]), RGB_STENCIL).pattern
+            variants = get_variants(torch.Tensor(pattern).permute(2, 0, 1), self.data[0].shape, depth=cfa_variants)
+            self.cfas += variants
+            self.cfa_idx += [i] * len(variants)
 
         self.l_i = len(self.data)
         self.l_c = len(self.cfas)
