@@ -12,7 +12,7 @@ set_matmul_precision()
 
 # %%
 CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'gindele', 'chakrabarti', 'hamilton', 'honda', 'kaizu', 'kodak', 'sony', 'sparse_3', 'wang', 'yamagami', 'yamanaka'])
-CFA_VARIANTS = 3
+CFA_VARIANTS = 1
 TRAIN_DIR = 'images/train'
 VAL_DIR = 'images/val'
 NOISE_STD = 0
