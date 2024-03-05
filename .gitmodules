@@ -1,0 +1,3 @@
+[submodule "src/forward_model"]
+	path = src/forward_model
+	url = git@github.com:mattmull42/forward_model.git
