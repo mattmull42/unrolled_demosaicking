@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 from torchvision.io import read_image
 
-from src.forward_model.operators import cfa_operator
+from src.forward_model.cfa_operator import cfa_operator
 from src.utils import get_variants
 
 
