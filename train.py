@@ -1,4 +1,3 @@
-# %%
 import lightning.pytorch as pl
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
 from lightning.pytorch.callbacks import ModelCheckpoint
@@ -10,7 +9,7 @@ from src.utils import get_dataloader, set_matmul_precision
 
 set_matmul_precision()
 
-# %%
+
 CFAS = sorted(['bayer_GRBG', 'gindele', 'chakrabarti', 'hamilton', 'honda', 'kaizu', 'kodak', 'sparse_3', 'wang', 'yamagami', 'yamanaka'])
 CFA_VARIANTS = 1
 TRAIN_DIR = 'images/train'
@@ -23,7 +22,7 @@ BATCH_SIZE = 256
 LEARNING_RATE = 1e-2
 NB_EPOCHS = 200
 
-# %%
+
 train_dataset = RGBDataset(TRAIN_DIR, CFAS, cfa_variants=CFA_VARIANTS, patch_size=PATCH_SIZE, stride=PATCH_SIZE // 2, std=NOISE_STD)
 train_dataloader = get_dataloader(train_dataset, BATCH_SIZE, shuffle=True)
 
@@ -40,7 +39,4 @@ trainer = pl.Trainer(logger=logger, callbacks=[early_stop, save_best], max_epoch
 
 lr_finder = pl.tuner.Tuner(trainer).lr_find(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader, num_training=200)
 
-# %%
 trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
-
-
