@@ -9,7 +9,7 @@ from src.utils import get_dataloader, set_matmul_precision
 
 set_matmul_precision()
 
-
+# Declares the hyperparameters
 CFAS = sorted(['bayer_GRBG', 'gindele', 'chakrabarti', 'hamilton', 'honda', 'kaizu', 'kodak', 'sparse_3', 'wang', 'yamagami', 'yamanaka'])
 CFA_VARIANTS = 1
 TRAIN_DIR = 'images/train'
@@ -22,13 +22,14 @@ BATCH_SIZE = 256
 LEARNING_RATE = 1e-2
 NB_EPOCHS = 200
 
-
+# Declares the datasets
 train_dataset = RGBDataset(TRAIN_DIR, CFAS, cfa_variants=CFA_VARIANTS, patch_size=PATCH_SIZE, stride=PATCH_SIZE // 2, std=NOISE_STD)
 train_dataloader = get_dataloader(train_dataset, BATCH_SIZE, shuffle=True)
 
 val_dataset = RGBDataset(VAL_DIR, CFAS, cfa_variants=CFA_VARIANTS, std=NOISE_STD)
 val_dataloader = get_dataloader(val_dataset, BATCH_SIZE)
 
+# Initializes the network and its trainer
 model = UnrolledSystem(lr=LEARNING_RATE, N=NB_STAGES, nb_channels=NB_CHANNELS)
 
 early_stop = EarlyStopping(monitor='Loss/Val', min_delta=1e-6, patience=20)
@@ -39,4 +40,5 @@ trainer = pl.Trainer(logger=logger, callbacks=[early_stop, save_best], max_epoch
 
 lr_finder = pl.tuner.Tuner(trainer).lr_find(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader, num_training=200)
 
+# Run the training
 trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)

@@ -23,7 +23,7 @@ competing methods were tailored to work well on.
 
 ## Installation
 
-All the code run in Python 3.9+ and rely on classical Python libraries (numpy, scikit image, torch, matplotlib). The code is proposed in a Pytorch Lightning class for convenience in training, testing and predicting. However, it is easily possible to get only the network which is written in pure Pytorch. It is recommended to use a **virtual environment** to run the code.
+All the code run in Python 3.9+ and rely on classical Python libraries (numpy, scikit image, torch, matplotlib, ...). The code is proposed in a Pytorch Lightning class for convenience in training, testing and predicting. However, it is easily possible to get only the network which is written in pure Pytorch. It is recommended to use a **virtual environment** to run the code.
 
 ```
 git clone --recurse-submodules https://github.com/mattmull42/unrolled_demosaicking
@@ -39,7 +39,7 @@ The Python script `train.py` contains all the routine to train the network on a 
 
 ## Testing
 
-The notebook `test.ipynb` provides the tools to apply the network with the selected weights on a dataset with a given set of CFAs. It gives the mean PSNR (dB) and mean SSIM, along with their corresponding standard variations.
+The notebook `test.ipynb` provides the tools to apply the network with the selected weights on a dataset with a given set of CFAs. It gives the mean PSNR (dB) and SSIM, along with their corresponding standard variations.
 
 ## Predicting
 
