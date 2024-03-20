@@ -2,9 +2,12 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from torchvision.transforms.v2.functional import vertical_flip, horizontal_flip, rotate
-from skimage.metrics import peak_signal_noise_ratio as psnr
+from skimage.metrics import peak_signal_noise_ratio
 import matplotlib.pyplot as plt
 from os import sched_getaffinity
+
+
+psnr = lambda x, y: peak_signal_noise_ratio(x, y, data_range=1)
 
 
 def format_output(output, crop=True):
@@ -27,12 +30,12 @@ def is_not_in_list(list, tensor):
 def plot_psnr_stages(gt_list, x_hat_list, cfa, cfa_idx):
     if len(cfa) != len(cfa_idx):
         for i in range(len(gt_list)):
-            plt.plot([psnr(gt_list[i], x_hat, data_range=1) for x_hat in x_hat_list[:, i]], 
+            plt.plot([psnr(gt_list[i], x_hat) for x_hat in x_hat_list[:, i]], 
                      label=f'{cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}')
 
     else:
         for i in range(len(gt_list)):
-            plt.plot([psnr(gt_list[i], x_hat, data_range=1) for x_hat in x_hat_list[:, i]], label=cfa[i])
+            plt.plot([psnr(gt_list[i], x_hat) for x_hat in x_hat_list[:, i]], label=cfa[i])
 
     plt.title('PSNR in function of the stages')
     plt.xlabel('Stages')
@@ -55,10 +58,10 @@ def plot_results(gt_list, x_hat_list, cfa, cfa_idx, stage):
 
         if len(cfa) != len(cfa_idx):
             ax.set_title((f'CFA: {cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}, '
-                          f'PSNR: {psnr(gt_list[i], x_hat_list[stage, i], data_range=1):.2f}dB'))
+                          f'PSNR: {psnr(gt_list[i], x_hat_list[stage, i]):.2f}dB'))
 
         else:
-            ax.set_title(f'CFA: {cfa[i]}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i], data_range=1):.2f}dB')
+            ax.set_title(f'CFA: {cfa[i]}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i]):.2f}dB')
 
     plt.show()
 
@@ -77,10 +80,10 @@ def plot_error_maps(gt_list, x_hat_list, cfa, cfa_idx, stage, gain):
 
         if len(cfa) != len(cfa_idx):
             ax.set_title((f'CFA: {cfa[cfa_idx[i]]} v{i - cfa_idx.index(cfa_idx[i])}, '
-                          f'PSNR: {psnr(gt_list[i], x_hat_list[stage, i], data_range=1):.2f}dB'))
+                          f'PSNR: {psnr(gt_list[i], x_hat_list[stage, i]):.2f}dB'))
 
         else:
-            ax.set_title(f'CFA: {cfa[i]}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i], data_range=1):.2f}dB')
+            ax.set_title(f'CFA: {cfa[i]}, PSNR: {psnr(gt_list[i], x_hat_list[stage, i]):.2f}dB')
 
     plt.show()
 
