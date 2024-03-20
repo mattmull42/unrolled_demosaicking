@@ -33,6 +33,8 @@ pip install -r requirements.txt
 
 We provide in `weights` the trained parameters with and without invariance. In both cases the training was done on the same dataset (BSD500) with the same set of CFAs (Bayer, Chakrabarti, Gindele, Hamilton, Honda, Kaizu, Kodak, Quad-Bayer, Sony, Sparse3, Wang, Yamagami, Yamanaka) and with the same parameters.
 
+To reproduce the results and use the proposed method in the paper the users need to use the weights ending by 'V' (which stands for Variations). Those weights come from the training with the invariance procedure enabled.
+
 ## Training
 
 The Python script `train.py` contains all the routine to train the network on a chosen set of CFAs. It is highly recommended running additional trainings on a GPU. The best weights will be saved in the `weights` directory, in function of the names of the CFAs seen during the training. The letter 'V' is appended if the training is done with invariance enabled.
