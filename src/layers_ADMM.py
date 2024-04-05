@@ -6,7 +6,7 @@ class U_ADMM(nn.Module):
     def __init__(self, N, nb_channels) -> None:
         super().__init__()
 
-        self.data = dict()
+        self.data = {}
 
         layers = []
         first_layer = PrimalBlock()
@@ -21,17 +21,13 @@ class U_ADMM(nn.Module):
 
         self.layers = nn.ModuleList(layers)
 
-    def setup_operator(self, x, mask):
+    def forward(self, x, mask):
         self.data['mask'] = mask
-        ones = torch.ones_like(x)
-        self.data['AAT'] = direct(self.data['mask'], adjoint(self.data['mask'], ones)) / ones
         self.data['ATy'] = adjoint(self.data['mask'], x)
         self.data['x'] = self.data['ATy'].clone()
         self.data['z'] = self.data['ATy'].clone()
         self.data['beta'] = torch.zeros_like(self.data['x'])
 
-    def forward(self, x, mask):
-        self.setup_operator(x, mask)
         res = []
 
         for i in range(len(self.layers)):
@@ -50,15 +46,10 @@ class PrimalBlock(nn.Module):
         self.rho = nn.Parameter(torch.tensor(0.1))
 
     def forward(self, data):
-        res = data['ATy'] + self.rho * (data['z'] - data['beta'])
+        A = lambda x: self.rho * x + adjoint(data['mask'], direct(data['mask'], x))
+        b = data['ATy'] + self.rho * (data['z'] - data['beta'])
 
-        tmp = direct(data['mask'], res)
-        tmp /= (self.rho + data['AAT'])
-        tmp = adjoint(data['mask'], tmp)
-
-        res -= tmp
-        res /= self.rho
-        data['x'] = res
+        data['x'] = cg(A, b, data['x'])
 
         return data
 
@@ -158,9 +149,30 @@ class Up(nn.Module):
         return self.conv(x)
 
 
-def direct(A, x):
-    return torch.sum(A * x, dim=1)
+def direct(mask, x):
+    return torch.sum(mask * x, dim=1)
 
 
-def adjoint(A, x):
-    return A * x[:, None, :, :]
+def adjoint(mask, x):
+    return mask * x[:, None, :, :]
+
+
+def cg(A, b, x_0, nb_iter=100, tol=1e-8):
+    x = x_0
+    r = b - A(x)
+    p = r.clone()
+    crit = torch.sum(r * r)
+    i = 0
+
+    while i <= nb_iter and crit >= tol:
+        Ap = A(p)
+        alpha = crit / torch.sum(p * Ap)
+        x += alpha * p
+        r -= alpha * Ap
+        crit_old = crit
+        crit = torch.sum(r * r)
+        beta = crit / crit_old
+        p = r + beta * p
+        i += 1
+
+    return x
