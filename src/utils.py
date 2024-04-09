@@ -89,7 +89,7 @@ def plot_error_maps(gt_list, x_hat_list, cfa, cfa_idx, stage, gain):
 
 
 def set_matmul_precision():
-    if torch.cuda.get_device_name() == 'NVIDIA A100-PCIE-40GB':
+    if 'NVIDIA A100-PCIE-40GB' in torch.cuda.get_device_name():
         torch.set_float32_matmul_precision('high')
 
 
