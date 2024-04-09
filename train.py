@@ -10,7 +10,7 @@ from src.utils import get_dataloader, set_matmul_precision
 set_matmul_precision()
 
 # Declares the hyperparameters
-CFAS = sorted(['bayer_GRBG', 'gindele', 'chakrabarti', 'hamilton', 'honda', 'kaizu', 'kodak', 'sparse_3', 'wang', 'yamagami', 'yamanaka'])
+CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'gindele', 'chakrabarti', 'hamilton', 'sony', 'honda', 'kaizu', 'kodak', 'sparse_3', 'wang', 'yamagami', 'yamanaka'])
 CFA_VARIANTS = 1
 TRAIN_DIR = 'images/train'
 VAL_DIR = 'images/val'
