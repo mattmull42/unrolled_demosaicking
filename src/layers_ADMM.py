@@ -7,24 +7,22 @@ class U_ADMM(nn.Module):
     def __init__(self, N, nb_channels) -> None:
         super().__init__()
 
-        layers = []
         first_layer = PrimalBlock()
         third_layer = MultiplierBlock()
+        layers = [first_layer]
 
         for _ in range(N - 1):
-            layers.append(first_layer)
             layers.append(AuxiliaryBlock(3, nb_channels))
             layers.append(third_layer)
-
-        layers.append(first_layer)
+            layers.append(first_layer)
 
         self.layers = nn.ModuleList(layers)
         self.data = {}
 
-    def forward(self, x, mask):
+    def forward(self, y, mask):
         self.data['mask'] = mask
-        self.data['y'] = x
-        self.data['x'] = adjoint(mask, x)
+        self.data['y'] = y
+        self.data['x'] = adjoint(mask, y)
         self.data['z'] = self.data['x'].clone()
         self.data['beta'] = torch.zeros_like(self.data['x'])
 
@@ -43,8 +41,10 @@ class PrimalBlock(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-        self.kernel = nn.Parameter(torch.rand((3, 1, 3, 3)))
         self.rho = nn.Parameter(torch.tensor(0.1))
+        self.kernel = nn.Parameter(torch.rand((3, 1, 3, 3)))
+        self.P = lambda x: F.conv2d(x[:, None], self.kernel, padding=1)
+        self.PT = lambda x: F.conv_transpose2d(x, self.kernel, padding=1)[:, 0]
 
     def forward(self, data):
         A = lambda x: self.rho * x + adjoint(data['mask'], self.PT(self.P(direct(data['mask'], x))))
@@ -53,12 +53,6 @@ class PrimalBlock(nn.Module):
         data['x'] = cg(A, b, data['x'])
 
         return data
-    
-    def P(self, x):
-        return F.conv2d(x[:, None], self.kernel, padding=1)
-    
-    def PT(self, x):
-        return F.conv_transpose2d(x, self.kernel, padding=1)[:, 0]
 
 
 class MultiplierBlock(nn.Module):
@@ -164,7 +158,7 @@ def adjoint(mask, x):
     return mask * x[:, None, :, :]
 
 
-def cg(A, b, x_0, nb_iter=100, tol=1e-8):
+def cg(A, b, x_0, nb_iter=100, tol=1e-6):
     x = x_0
     r = b - A(x)
     p = r.clone()
