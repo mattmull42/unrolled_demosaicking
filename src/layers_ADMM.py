@@ -50,7 +50,7 @@ class PrimalBlock(nn.Module):
         A = lambda x: self.rho * x + adjoint(data['mask'], self.PT(self.P(direct(data['mask'], x))))
         b = adjoint(data['mask'], self.PT(self.P(data['y']))) + self.rho * (data['z'] - data['beta'])
 
-        data['x'] = cg(A, b, data['x'])
+        data['x'] = cg(A, b)
 
         return data
 
@@ -158,8 +158,8 @@ def adjoint(mask, x):
     return mask * x[:, None, :, :]
 
 
-def cg(A, b, x_0, nb_iter=100, tol=1e-6):
-    x = x_0
+def cg(A, b, nb_iter=100, tol=1e-6):
+    x = b
     r = b - A(x)
     p = r.clone()
     crit = torch.sum(r * r)

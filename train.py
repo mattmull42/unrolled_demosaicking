@@ -38,7 +38,7 @@ logger = CSVLogger(save_dir='weights', name='-'.join(CFAS) + f'-{NB_STAGES}{"V" 
 
 trainer = pl.Trainer(logger=logger, callbacks=[early_stop, save_best], max_epochs=NB_EPOCHS)
 
-lr_finder = pl.tuner.Tuner(trainer).lr_find(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader, num_training=200)
+lr_finder = pl.tuner.Tuner(trainer).lr_find(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
 # Run the training
 trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
