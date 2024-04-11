@@ -14,7 +14,6 @@ CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'gindele', 'chakrabarti', 'hamilton',
 CFA_VARIANTS = 1
 TRAIN_DIR = 'images/train'
 VAL_DIR = 'images/val'
-NOISE_STD = 0
 PATCH_SIZE = 64
 NB_STAGES = 4
 NB_CHANNELS = 32
@@ -23,10 +22,10 @@ LEARNING_RATE = 1e-2
 NB_EPOCHS = 200
 
 # Declares the datasets
-train_dataset = RGBDataset(TRAIN_DIR, CFAS, cfa_variants=CFA_VARIANTS, patch_size=PATCH_SIZE, stride=PATCH_SIZE // 2, std=NOISE_STD)
+train_dataset = RGBDataset(TRAIN_DIR, CFAS, cfa_variants=CFA_VARIANTS, patch_size=PATCH_SIZE, stride=PATCH_SIZE // 2)
 train_dataloader = get_dataloader(train_dataset, BATCH_SIZE, shuffle=True)
 
-val_dataset = RGBDataset(VAL_DIR, CFAS, cfa_variants=CFA_VARIANTS, std=NOISE_STD)
+val_dataset = RGBDataset(VAL_DIR, CFAS, cfa_variants=CFA_VARIANTS)
 val_dataloader = get_dataloader(val_dataset, BATCH_SIZE)
 
 # Initializes the network and its trainer
