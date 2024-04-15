@@ -22,7 +22,7 @@ class U_ADMM(nn.Module):
     def forward(self, y, mask):
         self.data['mask'] = mask
         self.data['y'] = y
-        self.data['x'] = adjoint(mask, y)
+        self.data['x'] = adjoint(mask, y).requires_grad_()
         self.data['z'] = self.data['x'].clone()
         self.data['beta'] = torch.zeros_like(self.data['x'])
 
@@ -47,10 +47,10 @@ class PrimalBlock(nn.Module):
         self.PT = lambda x: F.conv_transpose2d(x, self.kernel, padding=1)[:, 0]
 
     def forward(self, data):
-        A = lambda x: self.rho * x + adjoint(data['mask'], self.PT(self.P(direct(data['mask'], x))))
-        b = adjoint(data['mask'], self.PT(self.P(data['y']))) + self.rho * (data['z'] - data['beta'])
+        A = lambda x: x + self.rho * adjoint(data['mask'], self.PT(self.P(direct(data['mask'], x))))
+        b = self.rho * adjoint(data['mask'], self.PT(self.P(data['y']))) + (data['z'] - data['beta'])
 
-        data['x'] = cg(A, b)
+        data['x'] = cg(A, b, data['x'])
 
         return data
 
@@ -107,10 +107,10 @@ class DoubleConv(nn.Module):
         self.double_conv = nn.Sequential(
             nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(mid_channels),
-            nn.PReLU(),
+            nn.PReLU(mid_channels),
             nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.PReLU()
+            nn.PReLU(out_channels)
         )
 
     def forward(self, x):
@@ -158,8 +158,8 @@ def adjoint(mask, x):
     return mask * x[:, None, :, :]
 
 
-def cg(A, b, nb_iter=100, tol=1e-6):
-    x = b
+def cg(A, b, x_0, nb_iter=100, tol=1e-4):
+    x = x_0
     r = b - A(x)
     p = r.clone()
     crit = torch.sum(r * r)
