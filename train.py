@@ -12,8 +12,8 @@ set_matmul_precision()
 # Declares the hyperparameters
 CFAS = sorted(['bayer_GRBG', 'quad_bayer', 'gindele', 'chakrabarti', 'hamilton', 'sony', 'honda', 'kaizu', 'kodak', 'sparse_3', 'wang', 'yamagami', 'yamanaka'])
 CFA_VARIANTS = 2
-TRAIN_DIR = 'images/train'
-VAL_DIR = 'images/val'
+TRAIN_DIR = 'input/train'
+VAL_DIR = 'input/val'
 NOISE_STD = 0
 PATCH_SIZE = 64
 NB_STAGES = 4
