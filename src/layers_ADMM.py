@@ -1,37 +1,31 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class U_ADMM(nn.Module):
     def __init__(self, N, nb_channels) -> None:
         super().__init__()
 
-        self.data = dict()
-
-        layers = []
         first_layer = PrimalBlock()
         third_layer = MultiplierBlock()
+        layers = [first_layer]
 
         for _ in range(N - 1):
-            layers.append(first_layer)
             layers.append(AuxiliaryBlock(3, nb_channels))
             layers.append(third_layer)
-
-        layers.append(first_layer)
+            layers.append(first_layer)
 
         self.layers = nn.ModuleList(layers)
+        self.data = {}
 
-    def setup_operator(self, x, mask):
+    def forward(self, y, mask):
         self.data['mask'] = mask
-        ones = torch.ones_like(x)
-        self.data['AAT'] = direct(self.data['mask'], adjoint(self.data['mask'], ones)) / ones
-        self.data['ATy'] = adjoint(self.data['mask'], x)
-        self.data['x'] = self.data['ATy'].clone()
-        self.data['z'] = self.data['ATy'].clone()
+        self.data['y'] = y
+        self.data['x'] = adjoint(mask, y).requires_grad_()
+        self.data['z'] = self.data['x'].clone()
         self.data['beta'] = torch.zeros_like(self.data['x'])
 
-    def forward(self, x, mask):
-        self.setup_operator(x, mask)
         res = []
 
         for i in range(len(self.layers)):
@@ -48,17 +42,15 @@ class PrimalBlock(nn.Module):
         super().__init__()
 
         self.rho = nn.Parameter(torch.tensor(0.1))
+        self.kernel = nn.Parameter(torch.rand((3, 1, 3, 3)))
+        self.P = lambda x: F.conv2d(x[:, None], self.kernel, padding=1)
+        self.PT = lambda x: F.conv_transpose2d(x, self.kernel, padding=1)[:, 0]
 
     def forward(self, data):
-        res = data['ATy'] + self.rho * (data['z'] - data['beta'])
+        A = lambda x: x + self.rho * adjoint(data['mask'], self.PT(self.P(direct(data['mask'], x))))
+        b = self.rho * adjoint(data['mask'], self.PT(self.P(data['y']))) + (data['z'] - data['beta'])
 
-        tmp = direct(data['mask'], res)
-        tmp /= (self.rho + data['AAT'])
-        tmp = adjoint(data['mask'], tmp)
-
-        res -= tmp
-        res /= self.rho
-        data['x'] = res
+        data['x'] = cg(A, b, data['x'])
 
         return data
 
@@ -115,10 +107,10 @@ class DoubleConv(nn.Module):
         self.double_conv = nn.Sequential(
             nn.Conv2d(in_channels, mid_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(mid_channels),
-            nn.LeakyReLU(inplace=True),
+            nn.PReLU(mid_channels),
             nn.Conv2d(mid_channels, out_channels, kernel_size=3, padding=1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU(inplace=True)
+            nn.PReLU(out_channels)
         )
 
     def forward(self, x):
@@ -158,9 +150,30 @@ class Up(nn.Module):
         return self.conv(x)
 
 
-def direct(A, x):
-    return torch.sum(A * x, dim=1)
+def direct(mask, x):
+    return torch.sum(mask * x, dim=1)
 
 
-def adjoint(A, x):
-    return A * x[:, None, :, :]
+def adjoint(mask, x):
+    return mask * x[:, None, :, :]
+
+
+def cg(A, b, x_0, nb_iter=100, tol=1e-4):
+    x = x_0
+    r = b - A(x)
+    p = r.clone()
+    crit = torch.sum(r * r)
+    i = 0
+
+    while i <= nb_iter and crit >= tol:
+        Ap = A(p)
+        alpha = crit / torch.sum(p * Ap)
+        x = x + alpha * p
+        r = r - alpha * Ap
+        crit_old = crit
+        crit = torch.sum(r * r)
+        beta = crit / crit_old
+        p = r + beta * p
+        i += 1
+
+    return x
