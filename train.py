@@ -35,7 +35,7 @@ early_stop = EarlyStopping(monitor='Loss/Val', min_delta=1e-6, patience=20)
 save_best = ModelCheckpoint(filename='best', monitor='Loss/Val')
 logger = CSVLogger(save_dir='weights', name='-'.join(CFAS) + f'-{NB_STAGES}{"V" if CFA_VARIANTS else ""}')
 
-trainer = pl.Trainer(logger=logger, callbacks=[early_stop, save_best], max_time=MAX_TIME)
+trainer = pl.Trainer(logger=logger, callbacks=[early_stop, save_best], max_time=MAX_TIME, precision='bf16-mixed')
 
 lr_finder = pl.tuner.Tuner(trainer).lr_find(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
