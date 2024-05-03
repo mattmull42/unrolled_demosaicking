@@ -19,7 +19,7 @@ NB_STAGES = 4
 NB_CHANNELS = 32
 BATCH_SIZE = 128
 LEARNING_RATE = 1e-2
-NB_EPOCHS = 200
+MAX_TIME = '00:47:30:00'
 
 # Declares the datasets
 train_dataset = RGBDataset(TRAIN_DIR, CFAS, cfa_variants=CFA_VARIANTS, patch_size=PATCH_SIZE, stride=PATCH_SIZE // 2)
@@ -35,7 +35,7 @@ early_stop = EarlyStopping(monitor='Loss/Val', min_delta=1e-6, patience=20)
 save_best = ModelCheckpoint(filename='best', monitor='Loss/Val')
 logger = CSVLogger(save_dir='weights', name='-'.join(CFAS) + f'-{NB_STAGES}{"V" if CFA_VARIANTS else ""}')
 
-trainer = pl.Trainer(logger=logger, callbacks=[early_stop, save_best], max_epochs=NB_EPOCHS)
+trainer = pl.Trainer(logger=logger, callbacks=[early_stop, save_best], max_time=MAX_TIME)
 
 lr_finder = pl.tuner.Tuner(trainer).lr_find(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
