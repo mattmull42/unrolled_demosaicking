@@ -34,7 +34,7 @@ val_dataloader = get_dataloader(val_dataset, BATCH_SIZE)
 model = UnrolledSystem(lr=LEARNING_RATE, N=NB_STAGES, nb_channels=NB_CHANNELS)
 
 early_stop = EarlyStopping(monitor='Loss/Val', min_delta=1e-6, patience=20)
-progress_bar = TQDMProgressBar(100)
+progress_bar = TQDMProgressBar(refresh_rate=100)
 save_best = ModelCheckpoint(filename='best', monitor='Loss/Val')
 logger = CSVLogger(save_dir='weights', name='-'.join(CFAS_TRAIN) + f'-{NB_STAGES}{"V" if CFA_VARIANTS else ""}')
 
