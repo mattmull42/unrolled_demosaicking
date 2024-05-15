@@ -35,7 +35,7 @@ model = UnrolledSystem(lr=LEARNING_RATE, N=NB_STAGES, nb_channels=NB_CHANNELS)
 
 early_stop = EarlyStopping(monitor='Loss/Val', min_delta=1e-6, patience=20)
 save_best = ModelCheckpoint(filename='best', monitor='Loss/Val')
-logger = CSVLogger(save_dir='weights', name='-'.join(CFAS) + f'-{NB_STAGES}{"V" if CFA_VARIANTS else ""}')
+logger = CSVLogger(save_dir='weights', name='-'.join(CFAS_TRAIN) + f'-{NB_STAGES}{"V" if CFA_VARIANTS else ""}')
 
 trainer = pl.Trainer(logger=logger, callbacks=[early_stop, save_best], max_time=MAX_TIME)
 
