@@ -10,14 +10,14 @@ from src.utils import get_dataloader, set_matmul_precision
 set_matmul_precision()
 
 # Declares the hyperparameters
-CFAS_TRAIN = sorted(['bayer_GRBG', 'quad_bayer', 'gindele', 'chakrabarti', 'hamilton', 'binning', 'honda', 'kaizu', 'kodak', 'sparse_3', 'wang', 'yamagami', 'yamanaka', 'random'])
-CFAS_TEST = sorted(['luo', 'lukac', 'xtrans', 'honda2', 'bayer_RGGB', 'sony'])
-CFAS = sorted(CFAS_TRAIN + CFAS_TEST)
+CFAS_TRAIN = ['bayer_GRBG', 'binning', 'chakrabarti', 'gindele', 'hamilton', 'honda', 'kaizu', 'kodak', 'quad_bayer', 'random', 'sparse_3', 'wang', 'yamagami', 'yamanaka']
+CFAS_TEST = ['honda2', 'lukac', 'luo', 'sony', 'xtrans']
+CFAS = CFAS_TRAIN + CFAS_TEST
 CFA_VARIANTS = 2
 TRAIN_DIR = 'input/train'
 VAL_DIR = 'input/val'
 PATCH_SIZE = 64
-NB_STAGES = 6
+NB_STAGES = 4
 NB_CHANNELS = 32
 BATCH_SIZE = 128
 LEARNING_RATE = 1e-2

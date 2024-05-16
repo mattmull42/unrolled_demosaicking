@@ -33,13 +33,14 @@ class UnrolledSystem(LightningModule):
 
     def validation_step(self, batch):
         x, mask, gt = batch
-        res = self.model(x, mask)[-1]
+        res = torch.clip(self.model(x, mask)[-1], 0, 1)
         
         self.log('Loss/Val', self.loss_mse(gt, res), prog_bar=True)
 
     def test_step(self, batch, batch_idx, dataloader_idx=0):
         x, mask, gt = batch
-        res = self.model(x, mask)[-1]
+        res = torch.clip(self.model(x, mask)[-1], 0, 1)
+        gt, res = gt[..., 2:-2, 2:-2], res[..., 2:-2, 2:-2]
 
         psnr = self.loss_psnr(gt, res)
         ssim = self.loss_ssim(gt, res)
@@ -52,8 +53,9 @@ class UnrolledSystem(LightningModule):
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         x, mask, gt = batch
+        res = torch.clip(self.model(x, mask), 0, 1)
 
-        return torch.concat((gt[None], self.model(x, mask)))
+        return torch.concat((gt[None], res))
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
