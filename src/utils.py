@@ -22,10 +22,6 @@ def get_dataloader(dataset, batch_size, shuffle=False):
     return DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle, num_workers=len(sched_getaffinity(0)))
 
 
-def is_not_in_list(list, tensor):
-    return not any([(tensor == variant).all() for variant in list if tensor.shape == variant.shape])
-
-
 def plot_psnr_stages(gt_list, x_hat_list, cfa, cfa_idx):
     if len(cfa) != len(cfa_idx):
         for i in range(len(gt_list)):
@@ -95,29 +91,14 @@ def rotation(pattern, angle):
 
 
 def get_variants(pattern, out_shape, depth):
-    pattern_list = [pattern]
+    res = [pattern]
 
-    for d in range(depth):
-        nb_patterns = len(pattern_list)
+    for _ in range(depth):
+        for pattern_idx in range(len(res)):
+            res += [translation(res[pattern_idx], i, j) for i in range(pattern.shape[-2]) for j in range(pattern.shape[-1])]
+            res += [reflection(res[pattern_idx], mode) for mode in ['v', 'h']]
+            res += [rotation(res[pattern_idx], angle) for angle in (90, 180, 270)]
 
-        for pattern_idx in range(nb_patterns):
-            for i in range(pattern.shape[-2]):
-                for j in range(pattern.shape[-1]):
-                    translated = translation(pattern_list[pattern_idx], i, j)
+        res = list(torch.unique(torch.stack(res), dim=0))
 
-                    if is_not_in_list(pattern_list, translated):
-                            pattern_list.append(translated)
-
-            for mode in ('v', 'h'):
-                reflected = reflection(pattern_list[pattern_idx], mode)
-
-                if is_not_in_list(pattern_list, reflected):
-                    pattern_list.append(reflected)
-
-            for angle in (90, 180, 270):
-                rotated = rotation(pattern_list[pattern_idx], angle)
-
-                if is_not_in_list(pattern_list, rotated):
-                    pattern_list.append(rotated)
-
-    return [get_mask(item, out_shape) for item in pattern_list]
+    return [get_mask(item, out_shape) for item in res]
