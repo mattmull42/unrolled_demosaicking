@@ -7,9 +7,6 @@ from src.forward_model.cfa_operator import cfa_operator
 from src.utils import get_variants
 
 
-RGB_STENCIL = [650, 525, 480]
-
-
 def data_loader_rgb(input_dir, patch_size=None, stride=None):
     res = []
 
@@ -33,18 +30,17 @@ def data_loader_rgb(input_dir, patch_size=None, stride=None):
 
 class RGBDataset(Dataset):
     def __init__(self, images_dir, cfas, cfa_variants=0, patch_size=None, stride=None):
-        self.images_dir = images_dir
         self.cfas = []
         self.cfa_idx = []
-        self.data = data_loader_rgb(images_dir, patch_size, stride)
+        self.gts = data_loader_rgb(images_dir, patch_size, stride)
 
         for i, cfa in enumerate(cfas):
-            pattern = cfa_operator(cfa, (self.data[0].shape[1], self.data[0].shape[2], self.data[0].shape[0]), RGB_STENCIL).pattern
-            variants = get_variants(torch.Tensor(pattern).permute(2, 0, 1), self.data[0].shape, depth=cfa_variants)
+            pattern = cfa_operator(cfa, (*self.gts[0].shape[1:], self.gts[0].shape[0]), [650, 525, 480]).pattern
+            variants = get_variants(torch.Tensor(pattern).permute(2, 0, 1), self.gts[0].shape, depth=cfa_variants)
             self.cfas += variants
             self.cfa_idx += [i] * len(variants)
 
-        self.l_i = len(self.data)
+        self.l_i = len(self.gts)
         self.l_c = len(self.cfas)
         self.l = self.l_i * self.l_c
 
@@ -52,8 +48,7 @@ class RGBDataset(Dataset):
         return self.l
 
     def __getitem__(self, index):
-        gt = self.data[index // self.l_c]
+        gt = self.gts[index // self.l_c]
         cfa = self.cfas[index % self.l_c]
-        x = torch.sum(cfa * gt, axis=0)
 
-        return x, cfa, gt
+        return (cfa * gt).sum(axis=0), cfa, gt
