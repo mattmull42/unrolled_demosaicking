@@ -13,7 +13,7 @@ set_matmul_precision()
 CFAS_TRAIN = ['bayer_GRBG', 'binning', 'chakrabarti', 'gindele', 'hamilton', 'honda', 'kaizu', 'kodak', 'quad_bayer', 'random', 'sparse_3', 'wang', 'yamagami', 'yamanaka']
 CFAS_TEST = ['honda2', 'lukac', 'luo', 'sony', 'xtrans']
 CFAS = CFAS_TRAIN + CFAS_TEST
-CFA_VARIANTS = 2
+CFA_VARIANTS = 1
 TRAIN_DIR = 'input/train'
 VAL_DIR = 'input/val'
 PATCH_SIZE = 64
