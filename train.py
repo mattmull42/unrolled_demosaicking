@@ -42,5 +42,5 @@ trainer = pl.Trainer(logger=logger, callbacks=[early_stop, progress_bar, save_be
 
 lr_finder = pl.tuner.Tuner(trainer).lr_find(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
 
-# Run the training
+# Runs the training
 trainer.fit(model, train_dataloaders=train_dataloader, val_dataloaders=val_dataloader)
