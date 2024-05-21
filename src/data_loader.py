@@ -8,24 +8,20 @@ from src.utils import get_variants
 
 
 def data_loader_rgb(input_dir, patch_size=None, stride=None):
-    res = []
-
-    if input_dir.endswith('.png') or input_dir.endswith('.jpg'):
-        images = [read_image(input_dir) / 255]
+    if path.isfile(input_dir):
+        res = torch.stack([read_image(input_dir) / 255])
 
     else:
-        images = [read_image(path.join(input_dir, image_path)) / 255 for image_path in listdir(input_dir)]
+        res = torch.stack([read_image(path.join(input_dir, image_path)) / 255
+                           for image_path in listdir(input_dir)])
 
-    if patch_size is None and stride is None:
-        return torch.stack(images)
+    if patch_size is None:
+        return res
 
-    for image in images:
-        res.append(image[None].unfold(2, patch_size, stride)
-                   .unfold(3, patch_size, stride)
-                   .permute(2, 3, 0, 1, 4, 5)
-                   .reshape(-1, image.shape[0], patch_size, patch_size))
-
-    return torch.cat(res)
+    return (res.unfold(2, patch_size, stride)
+               .unfold(3, patch_size, stride)
+               .permute(2, 3, 0, 1, 4, 5)
+               .reshape(-1, res.shape[1], patch_size, patch_size))
 
 
 class RGBDataset(Dataset):
