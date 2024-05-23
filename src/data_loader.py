@@ -31,7 +31,7 @@ class RGBDataset(Dataset):
         self.gts = data_loader_rgb(images_dir, patch_size, stride)
 
         for i, cfa in enumerate(cfas):
-            pattern = cfa_operator(cfa, (*self.gts[0].shape[1:], self.gts[0].shape[0]), [650, 525, 480]).pattern
+            pattern = cfa_operator(cfa, (*self.gts[0].shape[1:], self.gts[0].shape[0])).pattern
             variants = get_variants(torch.Tensor(pattern).permute(2, 0, 1), self.gts[0].shape, depth=cfa_variants)
             self.cfas += variants
             self.cfa_idx += [i] * len(variants)
