@@ -24,12 +24,8 @@ class UnrolledSystem(LightningModule):
     def training_step(self, batch):
         x, mask, gt = batch
         res = self.model(x, mask)
-        loss = 0
-
-        for output in res:
-            loss += self.loss_mse(gt, output)
-
-        return loss
+        
+        return sum(self.loss_mse(gt, output) for output in res)
 
     def validation_step(self, batch):
         x, mask, gt = batch
