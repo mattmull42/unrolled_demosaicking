@@ -1,0 +1,7 @@
+lightning
+matplotlib
+numpy
+scikit-image
+torch
+torchmetrics
+torchvision
